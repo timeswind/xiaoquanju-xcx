@@ -23,7 +23,6 @@
   margin-top: 64rpx;
   padding: 0 24rpx;
 }
-
 </style>
 <template>
   <form bindsubmit="formSubmit">
@@ -31,32 +30,32 @@
       <view class="list_item">
         <view class="title">收货人姓名:</view>
         <view class="input">
-          <input type="text" name="receiverName" value="" />
+          <input type="text" name="name" value="" />
         </view>
       </view>
       <view class="list_item">
         <view class="title">联系电话:</view>
         <view class="input">
-          <input type="text" name="mobile" />
+          <input type="text" name="phone" />
         </view>
       </view>
       <view class="list_item">
         <view class="title">所在地区:</view>
         <view class="input">
-          <view @tap="openAddressPicker">{{province ? province.name : '省'}} - {{city ? city.name : '市' }} - {{area ? area.name : '区' }}</view>
+          <view @tap="openAddressPicker">{{province ? province : '省'}} - {{city ? city : '市' }} - {{area ? area : '区' }}</view>
           <areaPicker @areaArray.user="areaPickerArray"></areaPicker>
         </view>
       </view>
       <view class="list_item">
         <view class="title">详细地址:</view>
         <view class="input">
-          <input type="text" name="addressDetail"/>
+          <input type="text" name="street"/>
         </view>
       </view>
       <view class="list_item">
         <view class="title">设置默认地址:</view>
         <view class="input tr" @tap="changeCheckBoxState">
-          <icon type="success" size="20" color="{{isDefult? 'red':'#999'}}" />
+          <icon type="success" size="20" color="{{isDefault? 'red':'#999'}}" />
         </view>
       </view>
     </view>
@@ -66,100 +65,103 @@
   </form>
 </template>
 <script>
-import wepy from 'wepy';
-import tip from '@/utils/tip';
+import wepy from "wepy";
+import tip from "@/utils/tip";
 import api from "@/api/api";
-import {
-  USER_SPECICAL_INFO
-} from '@/utils/constant';
-import AreaPicker from "./common/wepy-area-picker"
+import { USER_SPECICAL_INFO } from "@/utils/constant";
+import AreaPicker from "./common/wepy-area-picker";
 export default class AddressAdd extends wepy.component {
   data = {
-    isDefult: false,
-    province: '',
-    city: '',
-    area: '',
-    provinceCode: '',
-    cityCode: '',
-    areaCode: ''
-  }
+    province: "",
+    city: "",
+    area: "",
+    postcode: "",
+    isDefault: false
+  };
 
   components = {
     areaPicker: AreaPicker
-  }
+  };
 
   async addAddress(address) {
+    const addressData = {
+      name: address.name,
+      phone: address.phone,
+      province: this.province,
+      city: this.city,
+      area: this.area,
+      street: address.street,
+      postcode: this.postcode,
+      isDefault: this.isDefault
+    };
+    console.log(address.data);
     let that = this;
-    let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {};
-    let isDefult = 0;
-    if (this.isDefult) {
-      isDefult = 1;
-    }
-    let openId = userSpecialInfo.openid;
-    const json = await api.saveAddress({
-      query: {
-        openId: openId,
-        address: address,
-        isDef: isDefult,
-        province:that.provinceCode,
-        city:that.cityCode,
-        area:that.areaCode
-      }
+    const json = await api.addAddress({
+      query: addressData,
+      method: "POST"
     });
-    if (json.data.code == 0) {
+
+    if (json.data.success) {
       //0 列表 1新增 2编辑 (显示列表)
-      this.$emit('currentPage', 0);
-      this.$emit('refreshAddList', 'hehe');
+      this.$emit("currentPage", 0);
+      this.$emit("refreshAddList", "");
     } else {
-      tip.error(json.data.msg)
+      tip.error(json.data.error);
     }
     that.showLoading = false;
   }
   methods = {
     changeCheckBoxState() {
-      this.isDefult = !this.isDefult;
+      this.isDefault = !this.isDefault;
     },
     up() {
-      this.$emit('upup', 'hehe'); //主动触发upup方法，'hehe'为向父组件传递的数据
+      this.$emit("upup", "hehe"); //主动触发upup方法，'hehe'为向父组件传递的数据
     },
     formSubmit(e) {
+      console.log(e.detail.value);
+      let name = e.detail.value.name;
+      let phone = e.detail.value.phone;
+      let street = e.detail.value.street;
 
-      let receiverName = e.detail.value.receiverName;
-      let mobile = e.detail.value.mobile;
-      let addressDetail = e.detail.value.addressDetail;
-
-      if (receiverName == "") {
+      if (name === "") {
         tip.alert("输入收件人姓名");
         return false;
       }
-      if (mobile == "") {
+      if (phone === "") {
         tip.alert("输入联系电话");
         return false;
-
       }
-      if (addressDetail == "") {
+      if (street === "") {
         tip.alert("输入详细地址");
         return false;
       }
+
+      if (this.province === "") {
+        tip.alert("请选择省份城市");
+        return false;
+      }
+
+      if (this.city === "") {
+        tip.alert("请选择城市");
+        return false;
+      }
+
       this.addAddress(e.detail.value);
     },
     openAddressPicker() {
-      this.$invoke('areaPicker', 'openAddressPicker');
+      this.$invoke("areaPicker", "openAddressPicker");
     },
+
     areaPickerArray(province, city, area) {
-      this.province = province;
-      this.city = city;
-      this.area = area;
-      this.provinceCode = province.code;
-      this.cityCode = city.code;
-      this.areaCode = area.code;
+      this.province = province.name;
+      this.city = city.name;
+      this.area = area.name;
+      this.postcode = area.code || city.code || province.code;
+
       this.$apply();
     }
-  }
+  };
 
-  onLoad() {
-
-  }
+  onLoad() {}
 }
-
 </script>

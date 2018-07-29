@@ -1,7 +1,7 @@
 <template>
   <view class="authorize-contianer">
-    <image class="authorize-icon" src="../images/authorize.png"></image>
-    <view class="auth-item">商城申请获取以下权限：</view>
+    <!-- <image class="authorize-icon" src="../images/authorize.png"></image> -->
+    <view class="auth-item">小犬居申请获取以下权限：</view>
     <view class="auth-item">获取你的公开信息（头像、昵称等）</view>
     <view class="btn-authorize">
       <button open-type="getUserInfo" type="primary" lang="zh_CN" bindgetuserinfo="onGotUserInfo">授权</button>
@@ -9,69 +9,56 @@
   </view>
 </template>
 <script>
-import wepy from 'wepy';
-import api from '@/api/api';
-import {
-  SYSTEM_INFO,
-  USER_SPECICAL_INFO,
-  USER_INFO
-} from '@/utils/constant';
+import wepy from "wepy";
+import api from "@/api/api";
+import { SYSTEM_INFO, USER_SPECICAL_INFO, USER_INFO, TAGTRACK_ID } from "@/utils/constant";
 export default class Authorize extends wepy.page {
   config = {
-    navigationBarTitleText: '授权登录',
-  }
+    navigationBarTitleText: "授权登录"
+  };
   async onLoad() {
-    let res = await wepy.getSetting()
-    if ((res.authSetting)['scope.userInfo']) {
+    let res = await wepy.getSetting();
+    console.log(res)
+    if (res.authSetting["scope.userInfo"]) {
       wepy.switchTab({
-        url: '/pages/home'
-      })
+        url: "/pages/home"
+      });
     }
   }
   async onGotUserInfo(e) {
-    if (e.detail.errMsg == 'getUserInfo:ok') {
+    if (e.detail.errMsg == "getUserInfo:ok") {
       let res = await wepy.login();
       if (res.code) {
         wepy.setStorageSync(USER_INFO, e.detail.userInfo);
         let systemInfo = wepy.getSystemInfoSync();
         wepy.setStorageSync(SYSTEM_INFO, systemInfo);
-        let rlt = await api.wxJsCode2Session({
+        let auth = await api.wxJsCode2Token({
           query: {
-            jsCode: res.code,
-            nickName: e.detail.userInfo.nickName
+            js_code: res.code,
+            userInfo: e.detail.userInfo,
+            union_tagtrack_id: wepy.getStorageSync(TAGTRACK_ID) || ""
           }
-        })
-      if (rlt.data.result) {
-          let data = rlt.data;
-          if (data.data.openid) {
-            wepy.setStorageSync(USER_SPECICAL_INFO, data.data);
+        });
+        console.log("auth", auth);
+        if (auth.data.success) {
+          if (auth.data.wx_openid && auth.data.wx_unionid) {
+            wepy.setStorageSync(USER_SPECICAL_INFO, auth.data);
             wepy.switchTab({
-              url: '/pages/home'
-            })
+              url: "/pages/home"
+            });
           }
         } else {
-          let res = await wepy.showModal({
-            title: 'appid有误',
-            content: '授权失败'
-          })
-          if (res.confirm) {
-            wepy.switchTab({
-              url: '/pages/home'
-            })
-          }
+          console.error("fail to login"); //需要通知服务器
+          wepy.switchTab({
+            url: "/pages/home"
+          });
         }
-
       }
     }
   }
-  methods = {
-
-  }
-  events = {
-
-  }
+  methods = {};
+  events = {};
 }
-
 </script>
 <style lang="less">
 page {
@@ -97,5 +84,4 @@ page {
     margin: 100rpx 50rpx;
   }
 }
-
 </style>

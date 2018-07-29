@@ -1,18 +1,27 @@
 import {
-  wxRequest
+  wxRequest,
+  apiRequest
 } from '@/utils/wxRequest';
 
 let env = "-test" //-dev 或者 -test
 const apiMall = 'https://sujiefs.com/'
-// const apiMall = 'http://localhost:8080/'
+// const apiXQJ = 'https://xiaoquanjia.com'
+const apiXQJ = 'http://localhost:4200'
 
 /**
  * 获取发现好商品接口
  * @param  {[type]} params [description]
  * @return {[type]}        [description]
  */
+const getCategories = (params) => apiRequest(params, apiXQJ + '/api/public/categories');
+const getUserAddress = (params) => apiRequest(params, apiXQJ + '/api/protect/addresses');
+const addAddress = (params) => apiRequest(params, apiXQJ + '/api/protect/address');
+const deleteAddress =(params) => apiRequest(params, apiXQJ + '/api/protect/address');
+const updateAddress =(params) => apiRequest(params, apiXQJ + '/api/protect/address');
+
 const getDiscoverList = (params) => wxRequest(params, apiMall + '/goods/list?cateidOne=1&cateidTwo=0&price=0&sales=2');
 
+const wxJsCode2Token = (params) => apiRequest(params, apiXQJ + "/api/public/wx_xcx_login");
 //微信的jscode换取sessionKey
 const wxJsCode2Session = (params) => wxRequest(params, apiMall + "/api/wechat/jscode2session");
 const user2session = (params) => wxRequest(params, apiMall + "/api/wechat/user2session?jsoncallback=?");
@@ -89,9 +98,6 @@ const sendRandCode = (params) => wxRequest(params, apiMall + '/api/sms/send');
 //用户是否绑定手机号
 const getUserInfo = (params) => wxRequest(params, apiMall + '/api/userCenter/getUserInfo');
 
-//用户收货地址
-const getUserAddress = (params) => wxRequest(params, apiMall + '/api/receiverInfo/list');
-
 //保存用户收货地址
 const saveAddress = (params) => wxRequest(params, apiMall + '/api/receiverInfo/saveOrUpdate');
 
@@ -145,6 +151,11 @@ const childGoodsCatetoryList = (params) => wxRequest(params, apiMall + '/api/mal
 const getAdList = (params) => wxRequest(params, apiMall + '/api/adverts/list');
 
 export default {
+  addAddress,
+  deleteAddress,
+  updateAddress,
+  getCategories,
+  wxJsCode2Token,
   hostGoodsList,
   getDiscoverList,
   getHomeDisvocerList,
@@ -171,7 +182,6 @@ export default {
   registerUser,
   sendRandCode,
   getUserInfo,
-  getUserAddress,
   saveAddress,
   receiverInfoById,
   getUserAddress,

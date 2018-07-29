@@ -1,6 +1,5 @@
 <template>
   <view style="height:{{winHeight}}rpx;overflow:hidden">
-    <import src="../plugins/wxParse/wxParse.wxml" />
     <!--index.wxml-->
     <swiper indicator-dots="true" autoplay="true" interval="5000" duration="500" indicator-active-color="#ffc452" indicator-color="#efefef" class="swiper">
       <block wx:for="{{detail.photoList}}" key="item" item="item" wx:key="key">
@@ -81,8 +80,7 @@
     <view class="big_images">
       <view class="doc">
         <view class="wxParse-p">
-          <template is="wxParse" data="{{wxParseData:detailInfo.nodes}}">
-          </template>
+
         </view>
       </view>
     </view>
@@ -145,23 +143,22 @@
   </view>
 </template>
 <script>
-import wepy from 'wepy'
-import {
-  SYSTEM_INFO,
-  USER_SPECICAL_INFO
-} from '@/utils/constant';
-import tip from '@/utils/tip'
-import api from '@/api/api';
-import WxParse from "../plugins/wxParse/wxParse";
-import CommentList from "../components/comment_list"
-import timer from '@/components/common/timer'
+import wepy from "wepy";
+import { SYSTEM_INFO, USER_SPECICAL_INFO } from "@/utils/constant";
+import tip from "@/utils/tip";
+import api from "@/api/api";
+import CommentList from "../components/comment_list";
+import timer from "@/components/common/timer";
 export default class goodsDetail extends wepy.page {
   config = {
-    navigationBarTitleText: '商品详情'
-  }
+    navigationBarTitleText: "商品详情",
+    usingComponents: {
+      wxparser: "plugin://wxparserPlugin/wxparser"
+    }
+  };
   data = {
     winWidth: 0,
-    winHeight: '100%',
+    winHeight: "100%",
     goodsId: 0,
     detail: {},
     good_bigimg: [],
@@ -186,35 +183,37 @@ export default class goodsDetail extends wepy.page {
     purchaseText: "立即购买",
     special: 0, ////0-正常入库;1-特价专区和换货专区,
     commentList: [
-
       {
         url: "../images/icon_nav_01_new.png",
         name: "浪子天涯",
         time: "2017-10-01 10:10",
-        content: "东西收到,很满意!!真的是超级好的卖家,解答疑问不厌其烦,细致认真,关键是东西好,而且货物发得超快,包装仔细,值得信赖!",
+        content:
+          "东西收到,很满意!!真的是超级好的卖家,解答疑问不厌其烦,细致认真,关键是东西好,而且货物发得超快,包装仔细,值得信赖!",
         start: 4.5,
-        children: [{
-          content: "跟你交易次次都这么成功和开心的．．希望我们以后有更多的交易吧．．．哈哈"
-        }]
+        children: [
+          {
+            content:
+              "跟你交易次次都这么成功和开心的．．希望我们以后有更多的交易吧．．．哈哈"
+          }
+        ]
       },
       {
         url: "../images/icon_nav_02_new.png",
         name: "勇闯天下",
         time: "2017-10-01 10:10",
-        content: "太感谢了，衣服很漂亮，朋友很喜欢，最主要的是买家太好了~~~大大的赞一个。。。 衣服，很合身",
+        content:
+          "太感谢了，衣服很漂亮，朋友很喜欢，最主要的是买家太好了~~~大大的赞一个。。。 衣服，很合身",
         start: 4,
         children: []
       }
-
-
     ],
-    commentList1: [],
-  }
+    commentList1: []
+  };
 
   components = {
     commentList: CommentList,
-    timer:timer
-  }
+    timer: timer
+  };
   onLoad(option) {
     let that = this;
     this.orderNum = 1;
@@ -251,23 +250,23 @@ export default class goodsDetail extends wepy.page {
       duration: 200,
       timingFunction: "linear",
       delay: 0
-    })
+    });
     this.animation = animation;
   }
-  wxParseImgLoad(e) {}
+  // wxParseImgLoad(e) {}
 
-  wxParseImgTap(e) {
-    var that = this
-    var nowImgUrl = e.target.dataset.src
-    var tagFrom = e.target.dataset.from
-    if (typeof(tagFrom) != 'undefined' && tagFrom.length > 0) {
-      wx.previewImage({
-        current: nowImgUrl, // 当前显示图片的http链接
-        // urls: that.data[tagFrom].imageUrls // 需要预览的图片http链接列表
-        urls: that.bindData[tagFrom].imageUrls // 注释掉上面的 换着一行 (http://blog.csdn.net/zhuming3834/article/details/74380079)
-      })
-    }
-  }
+  // wxParseImgTap(e) {
+  //   var that = this;
+  //   var nowImgUrl = e.target.dataset.src;
+  //   var tagFrom = e.target.dataset.from;
+  //   if (typeof tagFrom != "undefined" && tagFrom.length > 0) {
+  //     wx.previewImage({
+  //       current: nowImgUrl, // 当前显示图片的http链接
+  //       // urls: that.data[tagFrom].imageUrls // 需要预览的图片http链接列表
+  //       urls: that.bindData[tagFrom].imageUrls // 注释掉上面的 换着一行 (http://blog.csdn.net/zhuming3834/article/details/74380079)
+  //     });
+  //   }
+  // }
   /*onReachBottom() {
     let that = this;
     if (that.good_bigimg.length == 0) {
@@ -287,7 +286,7 @@ export default class goodsDetail extends wepy.page {
     if (json.data.code == 0) {
       let data = json.data.data;
       that.detail = data;
-      WxParse.wxParse('detailInfo', 'html', that.detail.detailInfo, this);
+      // WxParse.wxParse("detailInfo", "html", that.detail.detailInfo, this);
       time.endTime = that.detail.validEndTime;
       time.startTime = that.detail.startTime;
       if (json.data.validDate == "0") {
@@ -298,13 +297,13 @@ export default class goodsDetail extends wepy.page {
       }
     } else {
       if (json.data.msg) {
-        tip.error(json.data.msg)
+        tip.error(json.data.msg);
       } else {
-        tip.error('查看商品失败')
+        tip.error("查看商品失败");
       }
     }
     that.$apply();
-    this.$invoke('timer', 'initTimer', time);
+    this.$invoke("timer", "initTimer", time);
   }
   async addUserBrowser() {
     let that = this;
@@ -317,8 +316,8 @@ export default class goodsDetail extends wepy.page {
       }
     });
   }
-  computed = {}
-  events = {}
+  computed = {};
+  events = {};
   //加入购物车
   async doTakeCart() {
     let that = this;
@@ -338,17 +337,17 @@ export default class goodsDetail extends wepy.page {
       this.animation.height(0).step();
       this.setData({
         animationData: this.animation.export()
-      })
+      });
       setTimeout(() => {
         this.hidden = true;
         this.$apply();
-      }, 100)
+      }, 100);
       tip.success("成功加入购物车");
     } else {
       if (json.data.msg) {
-        tip.error(json.data.msg)
+        tip.error(json.data.msg);
       } else {
-        tip.error('无法加入购物车')
+        tip.error("无法加入购物车");
       }
     }
   }
@@ -371,33 +370,37 @@ export default class goodsDetail extends wepy.page {
       this.animation.height(0).step();
       this.setData({
         animationData: this.animation.export()
-      })
+      });
       setTimeout(() => {
         this.hidden = true;
         this.$apply();
-      }, 100)
+      }, 100);
       wepy.navigateTo({
-        url: "/pages/comfire_order?goodsId=" + that.goodsId + "&purchasetype=" + that.purchasetype
-      })
+        url:
+          "/pages/comfire_order?goodsId=" +
+          that.goodsId +
+          "&purchasetype=" +
+          that.purchasetype
+      });
     } else {
       if (json.data.msg) {
-        tip.error(json.data.msg)
+        tip.error(json.data.msg);
       } else {
-        tip.error('无法立刻购买')
+        tip.error("无法立刻购买");
       }
     }
   }
   async showConfirmData() {
-    this.animation.height('783rpx').step();
+    this.animation.height("783rpx").step();
     this.setData({
       animationData: this.animation.export()
-    })
+    });
     setTimeout(() => {
       this.hidden = false;
       let systemInfo = wepy.getStorageSync(SYSTEM_INFO);
       this.winHeight = systemInfo.windowHeight;
       this.$apply();
-    }, 100)
+    }, 100);
   }
   //查看商品收藏状态
   async goodsIsFavorite() {
@@ -418,11 +421,11 @@ export default class goodsDetail extends wepy.page {
         this.isFavorite = false;
       }
     } else {
-      console.log('查看商品收藏失败')
+      console.log("查看商品收藏失败");
       if (json.data.msg) {
-        tip.error(json.data.msg)
+        tip.error(json.data.msg);
       } else {
-        tip.error('查看商品收藏失败')
+        tip.error("查看商品收藏失败");
       }
     }
     that.$apply();
@@ -439,12 +442,12 @@ export default class goodsDetail extends wepy.page {
       }
     });
     if (json.data.code == 0) {
-      console.log("===========商品收藏成功=========")
+      console.log("===========商品收藏成功=========");
       this.isFavorite = true;
       tip.toast("收藏成功");
     } else {
-      console.log(json.data)
-      tip.error('收藏失败')
+      console.log(json.data);
+      tip.error("收藏失败");
     }
     that.$apply();
   }
@@ -460,12 +463,12 @@ export default class goodsDetail extends wepy.page {
       }
     });
     if (json.data.code == 0) {
-      console.log("===========商品取消收藏成功=========")
+      console.log("===========商品取消收藏成功=========");
       tip.toast("取消收藏成功");
       this.isFavorite = false;
     } else {
-      console.log(json.data)
-      tip.error('取消收藏失败')
+      console.log(json.data);
+      tip.error("取消收藏失败");
     }
     that.$apply();
   }
@@ -473,8 +476,8 @@ export default class goodsDetail extends wepy.page {
     // issus : https://mp.weixin.qq.com/debug/wxadoc/dev/api/ui-navigate.html#wxrelaunchobject
     homePage() {
       wepy.switchTab({
-        url: '/pages/home'
-      })
+        url: "/pages/home"
+      });
       // wx.switchTab({
       //   url: '/pages/home'
       // })
@@ -484,19 +487,19 @@ export default class goodsDetail extends wepy.page {
     moreComment() {
       wepy.navigateTo({
         url: "/pages/comment"
-      })
+      });
     },
     previewImage(e) {
       let current = e.target.dataset.src;
       let imageArry = [];
       let obj = this.detail.photoList;
-      Object.keys(obj).forEach((item) => {
-        imageArry.push(obj[item].photo)
+      Object.keys(obj).forEach(item => {
+        imageArry.push(obj[item].photo);
       });
       wx.previewImage({
         current: current, // 当前显示图片的http链接
-        urls: imageArry, // 需要预览的图片http链接列表
-      })
+        urls: imageArry // 需要预览的图片http链接列表
+      });
     },
     bindOrderNumInput(e) {
       this.orderNum = e.detail.value;
@@ -529,13 +532,14 @@ export default class goodsDetail extends wepy.page {
       this.animation.height(0).step();
       this.setData({
         animationData: this.animation.export()
-      })
+      });
       setTimeout(() => {
         this.hidden = true;
         this.$apply();
-      }, 100)
+      }, 100);
     },
-    confirmTake() { //确定购物车或者直接购买
+    confirmTake() {
+      //确定购物车或者直接购买
       if (this.orderType == 1) {
         this.doTakeCart();
       } else if (this.orderType == 2) {
@@ -564,10 +568,17 @@ export default class goodsDetail extends wepy.page {
               skuVal.current = true;
               this.detail.goodsSkuValIds[index] = id;
               for (var k = 0; k < this.detail.goodsSkuList.length; k++) {
-                var skuValIds = JSON.parse(this.detail.goodsSkuList[k].skuValIds).toArray;
-                console.log("goodskuids..." + this.detail.goodsSkuList[k].skuValIds);
+                var skuValIds = JSON.parse(
+                  this.detail.goodsSkuList[k].skuValIds
+                ).toArray;
+                console.log(
+                  "goodskuids..." + this.detail.goodsSkuList[k].skuValIds
+                );
                 console.log("this goodskuids..." + this.detail.goodsSkuValIds);
-                if ("[" + this.detail.goodsSkuValIds.toString() + "]" === this.detail.goodsSkuList[k].skuValIds) {
+                if (
+                  "[" + this.detail.goodsSkuValIds.toString() + "]" ===
+                  this.detail.goodsSkuList[k].skuValIds
+                ) {
                   console.log("goodskuids equals...");
                   this.detail.stockNum = this.detail.goodsSkuList[k].stockNum;
                   this.detail.price = this.detail.goodsSkuList[k].price;
@@ -581,24 +592,23 @@ export default class goodsDetail extends wepy.page {
       }
     },
     onShareAppMessage: function(res) {
-      if (res.from === 'button') {
+      if (res.from === "button") {
         // 来自页面内转发按钮
-        console.log(res.target)
+        console.log(res.target);
       }
       return {
         title: this.detail.name,
-        path: '/pages/goods_detail?id=' + this.goodsId,
+        path: "/pages/goods_detail?id=" + this.goodsId,
         success: function(res) {
           // 转发成功
         },
         fail: function(res) {
           // 转发失败
         }
-      }
+      };
     }
-  }
+  };
 }
-
 </script>
 <style lang="less">
 .swiper {
@@ -648,7 +658,7 @@ export default class goodsDetail extends wepy.page {
     }
     .other-price {
       font-size: 28rpx;
-      padding-left: 40rpx
+      padding-left: 40rpx;
     }
     .share-box {
       text-align: center;
@@ -774,12 +784,12 @@ export default class goodsDetail extends wepy.page {
     background: #ff6e30;
   }
   .order_color {
-    background: #A9A9A9;
+    background: #a9a9a9;
     color: #fff;
   }
   .cart_color {
     color: #fff;
-    background: #A9A9A9;
+    background: #a9a9a9;
   }
   .item:first-child {
     border-right: 1px solid #efefef;
@@ -979,5 +989,4 @@ export default class goodsDetail extends wepy.page {
   color: #ff4856;
   border: 1px solid #ff4856;
 }
-
 </style>

@@ -1,96 +1,100 @@
 <template>
-  <view class="top_search">
+  <!-- <view class="top_search">
     <view class="search_read_only">
       <navigator class="search_content" url="/pages/search">
         <i class="iconfont icon-search"></i>
         <view class="search_input">搜索商品</view>
       </navigator>
     </view>
-  </view>
+  </view> -->
   <view class="classify" style="height:{{windowHeight-50}}px">
     <scroll-view class="classify_catetory" scroll-y scroll-with-animation="true" style="height:{{windowHeight-50}}px">
-      <view class="name {{item.active? 'active':''}}" wx:for="{{rootcateList}}" wx:key="item" @tap="changeCate" data-code="{{item.code}}">
+      <view class="name {{item.active? 'active':''}}" wx:for="{{rootcateList}}" wx:key="item" @tap="changeCate" data-code="{{item._id}}">
         {{item.name}}
       </view>
     </scroll-view>
     <scroll-view class="classify_detail" scroll-y scroll-with-animation="true" style="height:{{windowHeight-50}}px">
         <view class="children">
-          <navigator hover-class="none" class="children_item" wx:for="{{childcateList}}" wx:for-item="item" wx:key="index" url="/pages/search?cateCode={{item.secondCategory.code}}&title={{item.secondCategory.name}}">
-            <image class="child_image" src="{{item.secondCategory.thumLogo}}"></image>
-            <view class="child_name">{{item.secondCategory.name}}</view>
+          <navigator hover-class="none" class="children_item" wx:for="{{childcateList}}" wx:for-item="item" wx:key="index" url="/pages/search?cateCode={{item._id}}">
+            <!-- <image class="child_image" src="{{item.secondCategory.image}}"></image> -->
+            <view class="child_name">{{item.name}}</view>
           </navigator>
         </view>
     </scroll-view>
   </view>
 </template>
 <script>
-import wepy from 'wepy';
-import api from '@/api/api';
+import wepy from "wepy";
+import api from "@/api/api";
 import {
   SYSTEM_INFO,
-  SEL_CLASS_CODE
-} from '@/utils/constant';
+  SEL_CLASS_CODE,
+  DEFAULT_ROOT_CATEGORY_SCOPE
+} from "@/utils/constant";
 
-import tip from '@/utils/tip'
+import tip from "@/utils/tip";
 
 export default class Classify extends wepy.page {
   config = {
-    navigationBarTitleText: '分类',
-  }
-  components = {
-
-  }
+    navigationBarTitleText: "分类"
+  };
+  components = {};
 
   data = {
     scrollTop: 100,
     windowHeight: 0,
-    list: {},
     //一级分类数据
     rootcateList: {},
-    //二级三级分类数据
+    //二级分类数据
     childcateList: {}
-  }
+  };
 
   async getChildCate(rootCateCode) {
-    const json = await api.childGoodsCatetoryList({
+    const json = await api.getCategories({
       query: {
-        rootCategoryCode: rootCateCode
+        aggregate_scope: DEFAULT_ROOT_CATEGORY_SCOPE
       }
     });
-    if (json.data.code == 0) {
-      this.childcateList = json.data.list;
-    } else {
-      tip.error(json.data.msg);
-    }
+
+    this.childcateList = json.data.childCategoriesCollection[rootCateCode];
+
     this.$apply();
   }
 
   async getRootCateTopLevel() {
-    const json = await api.rootCtegoryList({
-      query: {}
-    });
-    if (json.data.code == 0) {
-      this.rootcateList = json.data.list;
-      if (this.rootcateList.length > 0) {
-        let selCode = wx.getStorageSync(SEL_CLASS_CODE);
-        var selRottCateCode = this.rootcateList[0].code;
-        if (selCode.length==0) {
-          this.rootcateList[0].active = true;
-        } else {
-          for (var i = 0; i < this.rootcateList.length; i++) {
-            if (selCode == this.rootcateList[i].code) {
-              selRottCateCode = this.rootcateList[i].code;
-              this.rootcateList[i].active = true;
-            }
-          }
-        }
-
-        this.getChildCate(selRottCateCode);
+    const json = await api.getCategories({
+      query: {
+        aggregate_scope: DEFAULT_ROOT_CATEGORY_SCOPE
       }
-    } else {
-      tip.error(json.data.msg);
-    }
+    });
+    console.log(json.data);
+    this.rootcateList = json.data.rootCategories;
     this.$apply();
+    // const json = await api.rootCtegoryList({
+    //   query: {}
+    // });
+    // if (json.data.code == 0) {
+    //   this.rootcateList = json.data.list;
+    //   if (this.rootcateList.length > 0) {
+    //     let selCode = wx.getStorageSync(SEL_CLASS_CODE);
+    //     var selRottCateCode = this.rootcateList[0].code;
+    //     if (selCode.length==0) {
+    //       this.rootcateList[0].active = true;
+    //     } else {
+    //       for (var i = 0; i < this.rootcateList.length; i++) {
+    //         if (selCode == this.rootcateList[i].code) {
+    //           selRottCateCode = this.rootcateList[i].code;
+    //           this.rootcateList[i].active = true;
+    //         }
+    //       }
+    //     }
+
+    //     this.getChildCate(selRottCateCode);
+    //   }
+    // } else {
+    //   tip.error(json.data.msg);
+    // }
+    // this.$apply();
   }
 
   onLoad() {
@@ -98,16 +102,13 @@ export default class Classify extends wepy.page {
     let systemInfo = wx.getStorageSync(SYSTEM_INFO);
     this.windowHeight = systemInfo.windowHeight;
     this.$apply();
-
   }
 
   onShow() {
     this.getRootCateTopLevel();
   }
 
-  computed = {
-
-  }
+  computed = {};
   methods = {
     changeCate(e) {
       let code = e.currentTarget.dataset.code;
@@ -117,33 +118,30 @@ export default class Classify extends wepy.page {
       for (var i = 0; i < this.rootcateList.length; i++) {
         var rootCate = this.rootcateList[i];
         rootCate.active = false;
-        if (rootCate.code == code) {
+        if (rootCate._id == code) {
           rootCate.active = true;
         }
       }
     },
-    onShareAppMessage: function (res) {
-      if (res.from === 'button') {
+    onShareAppMessage: function(res) {
+      if (res.from === "button") {
         // 来自页面内转发按钮
-        console.log(res.target)
+        console.log(res.target);
       }
       return {
         title: this.detail.name,
-        path: '/pages/classify',
+        path: "/pages/classify",
         success: function(res) {
           // 转发成功
         },
         fail: function(res) {
           // 转发失败
         }
-      }
+      };
     }
-  }
-  events = {
-
-  }
+  };
+  events = {};
 }
-
 </script>
 <style lang="less">
 .search_read_only .search_content {
@@ -179,7 +177,8 @@ export default class Classify extends wepy.page {
     // margin-left: -15rpx;
     background: #fff;
     padding: 15px 10px 10px 30px;
-    .classify_item {}
+    .classify_item {
+    }
     .title {
       font-size: 30rpx;
       color: #333;
@@ -209,5 +208,4 @@ export default class Classify extends wepy.page {
     }
   }
 }
-
 </style>

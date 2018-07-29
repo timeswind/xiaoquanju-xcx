@@ -1,0 +1,16 @@
+{
+	"description": "xiaoquanju",
+	"setting": {
+		"urlCheck": false,
+		"es6": false,
+		"postcss": false,
+		"minified": true,
+		"newFeature": true
+	},
+	"compileType": "miniprogram",
+	"appid": "wxb3ff1fcb37b94be1",
+	"projectname": "xiaoquanju",
+	"miniprogramRoot": "./dist",
+	"libVersion": "2.2.0",
+	"condition": {}
+}

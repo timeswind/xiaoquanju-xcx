@@ -1,7 +1,7 @@
 {
-  "name": "wxYuHanStore",
+  "name": "xiaoquanju",
   "version": "1.0.2",
-  "description": "wxYuHanStore project",
+  "description": "xiaoquanju",
   "main": "dist/app.js",
   "scripts": {
     "dev": "wepy build --watch",
@@ -13,7 +13,7 @@
   "wepy": {
     "module-a": false
   },
-  "author": "yongqing <490844594@qq.com>",
+  "author": "Mingtian Yang",
   "license": "MIT",
   "dependencies": {
     "wepy": "^1.6.0",
@@ -34,8 +34,10 @@
     "eslint-plugin-html": "^2.0.1",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^2.0.1",
-    "wepy-eslint": "^1.5.3",
     "wepy-compiler-babel": "^1.5.1",
-    "wepy-compiler-less": "^1.3.10"
+    "wepy-compiler-less": "^1.3.10",
+    "wepy-compiler-sass": "^1.3.12",
+    "wepy-eslint": "^1.5.3",
+    "wepy-plugin-uglifyjs": "^1.3.7"
   }
 }
