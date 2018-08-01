@@ -17,7 +17,7 @@ import AddressAdd from "../components/address_add";
 import AddressEdit from "../components/address_edit";
 import api from "@/api/api";
 import tip from "@/utils/tip";
-import { USER_SPECICAL_INFO } from "@/utils/constant";
+import { IMAGE_CDN_URL } from "@/utils/constant";
 export default class Address extends wepy.page {
   config = {
     navigationBarTitleText: "地址管理"
@@ -31,16 +31,13 @@ export default class Address extends wepy.page {
   };
 
   async getUserAddress(phone, code) {
-    // let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {};
-    // let openId = userSpecialInfo.openid;
     const json = await api.getUserAddress();
 
     if (json.data.success) {
       this.addressList = json.data.addresses;
     }
-
-    this.$apply();
     this.showLoading = false;
+    this.$apply();
   }
 
   components = {
@@ -56,6 +53,7 @@ export default class Address extends wepy.page {
   }
 
   onShow() {
+    this.showLoading = true;
     this.getUserAddress();
   }
 
@@ -64,13 +62,13 @@ export default class Address extends wepy.page {
       this.currentPage = page;
       if (page === 2) {
         this.$invoke("addressEdit", "refresh", data);
-        console.log(data);
       }
     }
   };
   onUnload() {}
   events = {
     refreshAddList(msg) {
+      this.showLoading = true;
       this.getUserAddress();
     }
   };

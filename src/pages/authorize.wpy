@@ -39,7 +39,6 @@ export default class Authorize extends wepy.page {
             union_tagtrack_id: wepy.getStorageSync(TAGTRACK_ID) || ""
           }
         });
-        console.log("auth", auth);
         if (auth.data.success) {
           if (auth.data.wx_openid && auth.data.wx_unionid) {
             wepy.setStorageSync(USER_SPECICAL_INFO, auth.data);

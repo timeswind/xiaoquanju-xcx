@@ -6,7 +6,7 @@
 <script>
 import wepy from "wepy";
 import "wepy-async-function";
-import { TAGTRACK_ID, USER_SPECICAL_INFO } from "@/utils/constant";
+import { TAGTRACK_ID, USER_SPECICAL_INFO,USER_INFO,SYSTEM_INFO } from "@/utils/constant";
 import api from "@/api/api";
 
 export default class extends wepy.app {
@@ -93,26 +93,41 @@ export default class extends wepy.app {
 
   async onLaunch(option) {
     console.log(option);
+    var that = this
     if ("tagtrack" in option.query) {
       wepy.setStorageSync(TAGTRACK_ID, option.query.tagtrack);
     }
     let res = await wepy.getSetting();
+    console.log(res.authSetting["scope.userInfo"])
     if (res.authSetting["scope.userInfo"]) {
-      let res = await wepy.login();
-      if (res.code) {
-        let auth = await api.wxJsCode2Token({
-          query: {
-            js_code: res.code,
-            union_tagtrack_id: wepy.getStorageSync(TAGTRACK_ID) || ""
-          }
-        });
-        if (auth.data.success) {
-          if (auth.data.wx_openid && auth.data.wx_unionid) {
-            wepy.setStorageSync(USER_SPECICAL_INFO, auth.data);
-          }
-        } else {
-          console.error("fail to login"); //需要通知服务器
+      wx.getUserInfo({
+        success: function(res) {
+          that.login(res.userInfo);
         }
+      });
+    } else {
+      wepy.navigateTo({
+        url: "/pages/authorize"
+      });
+    }
+  }
+
+  async login(userInfo) {
+    let login = await wepy.login();
+    let js_code = login.code;
+    let systemInfo = wepy.getSystemInfoSync();
+    wepy.setStorageSync(USER_INFO, userInfo);
+    wepy.setStorageSync(SYSTEM_INFO, systemInfo);
+    let auth = await api.wxJsCode2Token({
+      query: {
+        js_code: js_code,
+        userInfo: userInfo,
+        union_tagtrack_id: wepy.getStorageSync(TAGTRACK_ID) || ""
+      }
+    });
+    if (auth.data.success) {
+      if (auth.data.wx_openid && auth.data.wx_unionid) {
+        wepy.setStorageSync(USER_SPECICAL_INFO, auth.data);
       }
     }
   }

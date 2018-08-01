@@ -3,25 +3,38 @@ import {
   apiRequest
 } from '@/utils/wxRequest';
 
-let env = "-test" //-dev 或者 -test
 const apiMall = 'https://sujiefs.com/'
-// const apiXQJ = 'https://xiaoquanjia.com'
-const apiXQJ = 'http://localhost:4200'
+const apiXQJ = 'https://api.cssapsu.cn'
+// const apiXQJ = 'http://localhost:4200'
 
 /**
  * 获取发现好商品接口
  * @param  {[type]} params [description]
  * @return {[type]}        [description]
  */
+const wxJsCode2Token = (params) => apiRequest(params, apiXQJ + "/api/public/wx_xcx_login");
+
+const getHomeGoods = (params) => apiRequest(params, apiXQJ + "/api/public/goods/xcx_home");
+const getGoodDetail = (params) => apiRequest(params, apiXQJ + "/api/public/good");
+
 const getCategories = (params) => apiRequest(params, apiXQJ + '/api/public/categories');
 const getUserAddress = (params) => apiRequest(params, apiXQJ + '/api/protect/addresses');
 const addAddress = (params) => apiRequest(params, apiXQJ + '/api/protect/address');
-const deleteAddress =(params) => apiRequest(params, apiXQJ + '/api/protect/address');
-const updateAddress =(params) => apiRequest(params, apiXQJ + '/api/protect/address');
+const deleteAddress = (params) => apiRequest(params, apiXQJ + '/api/protect/address');
+const updateAddress = (params) => apiRequest(params, apiXQJ + '/api/protect/address');
+
+const getUserShopcarts = (params) => apiRequest(params, apiXQJ + '/api/protect/shopcarts');
+const addToUserShopcarts = (params) => apiRequest(params, apiXQJ + '/api/protect/shopcart');
+const updateUserShopcart = (params) => apiRequest(params, apiXQJ + '/api/protect/shopcart');
+const deleteShopcart = (params) => apiRequest(params, apiXQJ + '/api/protect/shopcart');
+
+
+
 
 const getDiscoverList = (params) => wxRequest(params, apiMall + '/goods/list?cateidOne=1&cateidTwo=0&price=0&sales=2');
 
-const wxJsCode2Token = (params) => apiRequest(params, apiXQJ + "/api/public/wx_xcx_login");
+
+
 //微信的jscode换取sessionKey
 const wxJsCode2Session = (params) => wxRequest(params, apiMall + "/api/wechat/jscode2session");
 const user2session = (params) => wxRequest(params, apiMall + "/api/wechat/user2session?jsoncallback=?");
@@ -151,6 +164,12 @@ const childGoodsCatetoryList = (params) => wxRequest(params, apiMall + '/api/mal
 const getAdList = (params) => wxRequest(params, apiMall + '/api/adverts/list');
 
 export default {
+  getHomeGoods,
+  getGoodDetail,
+  getUserShopcarts,
+  updateUserShopcart,
+  addToUserShopcarts,
+  deleteShopcart,
   addAddress,
   deleteAddress,
   updateAddress,

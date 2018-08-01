@@ -67,34 +67,8 @@ export default class Classify extends wepy.page {
         aggregate_scope: DEFAULT_ROOT_CATEGORY_SCOPE
       }
     });
-    console.log(json.data);
     this.rootcateList = json.data.rootCategories;
     this.$apply();
-    // const json = await api.rootCtegoryList({
-    //   query: {}
-    // });
-    // if (json.data.code == 0) {
-    //   this.rootcateList = json.data.list;
-    //   if (this.rootcateList.length > 0) {
-    //     let selCode = wx.getStorageSync(SEL_CLASS_CODE);
-    //     var selRottCateCode = this.rootcateList[0].code;
-    //     if (selCode.length==0) {
-    //       this.rootcateList[0].active = true;
-    //     } else {
-    //       for (var i = 0; i < this.rootcateList.length; i++) {
-    //         if (selCode == this.rootcateList[i].code) {
-    //           selRottCateCode = this.rootcateList[i].code;
-    //           this.rootcateList[i].active = true;
-    //         }
-    //       }
-    //     }
-
-    //     this.getChildCate(selRottCateCode);
-    //   }
-    // } else {
-    //   tip.error(json.data.msg);
-    // }
-    // this.$apply();
   }
 
   onLoad() {

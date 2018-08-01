@@ -89,7 +89,6 @@ export default class orderItem extends wepy.component {
       }
     });
     if (json.data.code == 0) {
-
       this.$emit('refreshOrderList', that.flag);
     } else {
       tip.error(json.data.errerTips)

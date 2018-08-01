@@ -80,7 +80,6 @@ export default class AddressEdit extends wepy.component {
   };
 
   async updateAddress() {
-    console.log(this.address);
     const addressData = {
       _id: this.address._id,
       name: this.address.name,
@@ -99,7 +98,6 @@ export default class AddressEdit extends wepy.component {
     });
 
     if (json.data.success) {
-      //0 列表 1新增 2编辑 (显示列表)
       this.$emit("currentPage", 0);
       this.$emit("refreshAddList", "");
     }
