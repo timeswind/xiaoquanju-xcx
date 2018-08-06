@@ -87,7 +87,7 @@ export default class AddressList extends wepy.component {
       }
       var index = e.currentTarget.dataset.index;
 
-      wepy.setStorageSync(ADDRESS_ID, this.list[index]._id)
+      wepy.setStorageSync(ADDRESS_ID, this.list[index]._id);
 
       wepy.navigateBack();
     }
@@ -98,17 +98,18 @@ export default class AddressList extends wepy.component {
 </script>
 <style lang="less">
 .list_box {
-  height: 150rpx;
+  height: 200rpx;
 }
 
 .address {
+  padding-bottom: 80px;
   .list_box:last-child {
     border-bottom: 1px solid #efefef;
   }
   .address_list {
     display: flex;
     justify-content: space-between;
-    height: 150rpx;
+    height: 200rpx;
     align-items: center;
     padding: 0rpx 0px 0px 35rpx;
     border-top: 1px solid #efefef;
@@ -116,17 +117,21 @@ export default class AddressList extends wepy.component {
       color: #000;
     }
     .arrow {
-      height: 150rpx;
-      line-height: 150rpx;
+      height: 60rpx;
       width: 150rpx;
       text-align: center;
       color: #9a9a9a;
     }
     .user_info {
       color: #1a1a1a;
+      .phone {
+        margin-left: 8px;
+      }
     }
     .active_address {
-      margin-top: 20rpx;
+      margin-top: 8px;
+      font-size: 16px;
+      color: #333;
     }
     .defult {
       color: #ea4a3a;
@@ -135,12 +140,12 @@ export default class AddressList extends wepy.component {
 }
 
 .add_wrap {
-  display: block;
   width: 95%;
   left: 0;
   right: 0;
-  position: absolute;
+  position: fixed;
   bottom: 20rpx;
   margin: 0 auto;
+  z-index: 999;
 }
 </style>
