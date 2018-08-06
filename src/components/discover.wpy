@@ -4,9 +4,9 @@
             <view class="discover_title_doc">发现好商品</view>
         </view>
         <view class="discover_list">
-            <navigator class="item" open-type="navigate" wx:for="{{list}}" wx:key="item" url="/pages/goods_detail?id={{item._id}}" >
-                <image mode="widthFix" class="discover_img" src="{{imageCdnUrl+ item.images[0] + '?' +  homeDiscvoverGoodsSuffix}}"></image>
-                    <view>{{item.name}}：</view>
+            <navigator class="item" open-type="navigate" wx:for="{{list}}" wx:key="item" url="/pages/good_detail?id={{item._id}}" >
+                <image mode="widthFix" class="discover_img" src="{{imageCdnUrl+ item.images[0] + '?' +  homeDiscvoverGoodsSuffix}}" />
+                <view>{{item.name}}</view>
             </navigator>
         </view>
     </view>
@@ -27,11 +27,6 @@ export default class Discover extends wepy.component {
     imageCdnUrl: IMAGE_CDN_URL,
     homeDiscvoverGoodsSuffix: HOME_DISCOVER_GOOD_SUFFIX
   };
-
-  onLoad() {
-    console.log(IMAGE_CDN_URL);
-    console.log(this.list); // 'p-title-changed' --- 有.sync修饰符的props属性值，当在父组件中改变时，会同时改变子组件对应的值。
-  }
 }
 </script>
 <style lang="less">

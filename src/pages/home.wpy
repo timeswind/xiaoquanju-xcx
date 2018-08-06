@@ -23,18 +23,29 @@ export default class Home extends wepy.page {
     goodList: []
   };
 
+
   async onShow() {
     this.getGoods();
   }
 
   async getGoods() {
-    const json = await api.getHomeGoods();
+    wepy.showNavigationBarLoading();
+    const json = await api.getHomeGoods({
+      no_loading: true
+    });
     const data = json.data;
     if (data.success) {
       this.goodList = data.goods;
-      this.$apply();
     }
+    this.$apply();
+    wepy.hideNavigationBarLoading();
+    wepy.stopPullDownRefresh();
   }
+
+  onPullDownRefresh() {
+    this.getGoods();
+  }
+
   methods = {
     goToAdvert(url) {
       // console.log("url===" + url);
@@ -68,26 +79,6 @@ export default class Home extends wepy.page {
       // tip.alert('关闭');
     }
   };
-  //加载更多
-
-  // onReachBottom() {
-  //   let that = this;
-  //   that.showLoading = true;
-  //   console.log(that.page_total + "===" + that.currentPage);
-  //   //判断总页数是否大于翻页数
-  //   if (that.page_total > that.currentPage) {
-  //     //防止重复加载
-  //     if (that.preventRepeatReuqest) {
-  //       return true;
-  //     }
-  //     that.preventRepeatReuqest = true;
-  //     that.currentPage++;
-  //     that.getDiscoverList(that.currentPage);
-  //     that.preventRepeatReuqest = false;
-  //   } else {
-  //     that.showLoading = false;
-  //   }
-  // }
 }
 </script>
 <style lang="less">

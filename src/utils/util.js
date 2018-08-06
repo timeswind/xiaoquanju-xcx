@@ -34,9 +34,9 @@ function vailPhone(number) {
   let myreg = /^(((13[0-9]{1})|(14[0-9]{1})|(17[0]{1})|(15[0-3]{1})|(15[5-9]{1})|(18[0-9]{1}))+\d{8})$/;
   if (number.length != 11) {
     flag = flag;
-  }else if (!myreg.test(number)) {
+  } else if (!myreg.test(number)) {
     flag = flag;
-  }else{
+  } else {
     flag = true;
   }
   return flag;
@@ -119,7 +119,7 @@ function convertStarArray(score) {
   for (var i = 1; i <= 5; i++) {
     if (score >= i) {
       arr.push(1)
-    } else if (score > i-1 && score < i + 1) {
+    } else if (score > i - 1 && score < i + 1) {
       arr.push(2)
     } else {
       arr.push(0)
@@ -127,7 +127,28 @@ function convertStarArray(score) {
   }
   return arr
 }
+
+let getQueryString = function (url, name) {
+  var reg = new RegExp('(^|&|/?)' + name + '=([^&|/?]*)(&|/?|$)', 'i')
+  var r = url.substr(1).match(reg)
+  if (r != null) {
+    return r[2]
+  }
+  return null;
+}
+
+let isObjectEmpty = function (obj) {
+  for (var key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 module.exports = {
+  isObjectEmpty: isObjectEmpty,
+  getQueryString: getQueryString,
   getCurrentTime: getCurrentTime,
   objLength: objLength,
   displayProp: displayProp,

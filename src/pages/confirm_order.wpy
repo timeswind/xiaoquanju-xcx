@@ -1,0 +1,452 @@
+<!--确认订单-->
+<template>
+  <view class="comfire_order">
+    <view class="address" @tap="setAddress">
+      <view class="address_info" wx:if="{{address._id}}">
+        <view class="title">
+          <view class="user_info">
+            <text class="name">{{address.name}}</text>
+            <text class="phone">{{address.phone}}</text>
+          </view>
+          <view class="active_address">
+            <text class="defult" wx:if="{{address.isDefault==1}}"> [默认]</text>
+            {{address.street}}
+          </view>
+        </view>
+        <view class="arrow">&gt;</view>
+      </view>
+      <view class="empty_address" wx:else>
+        <view class="title">设置收货地址</view>
+        <view class="arrow">&gt;</view>
+      </view>
+    </view>
+    <view class="spacing"></view>
+
+
+<view class="goodsList">
+    <!--列表显示2个，绑定数据记得去掉，这里做调试-->
+<repeat for="{{shopcarts}}" key="index" index="index" item="item">
+<view class="list_box">
+      <view class="goods-info">
+        <view class="img-box">
+          <image src="{{item.price_set.image ? (imageCdnUrl+ item.price_set.image + '?' +  imageSuffix) : (imageCdnUrl+ item.good.images[0] + '?' +  imageSuffix) }}" class="img" />
+        </view>
+        <view class="text-box">
+          <view class="goods-title">{{item.good.name}}</view>
+          <view class="goods-label">{{item.price_set.name}}</view>
+          <view class="goods-price">¥ {{item.price_set.price}}<text style="color: #666"> x {{item.item_count}}</text></view>
+        </view>
+      </view>
+</view>
+</repeat>
+</view>
+    <view class="spacing"></view>
+    <view class="order_info">
+      <view class="block">
+        <view class="left">配送方式</view>
+        <view class="right">包邮</view>
+      </view>
+      <view class="spacing"></view>
+      <view class="block">
+        <view class="left tongji">商品金额</view>
+        <view>
+          <view class="right price">应付:￥{{totalPrice}}</view>
+          </view>
+      </view>
+    </view>
+    <view class="pay_box">
+      <form report-submit bindsubmit="createOrder" >
+        <text class="address_warning" wx:if="{{!address._id}}">*填写地址</text>
+        <button form-type="submit" class="button type_green" disabled="{{!address._id || disablePayButton}}" style="margin-top: 8px">微信支付</button>
+      </form>
+    </view>
+  </view>
+</template>
+<script>
+import wepy from "wepy";
+import api from "@/api/api";
+import tip from "@/utils/tip";
+import {
+  SYSTEM_INFO,
+  USER_SPECICAL_INFO,
+  ADDRESS_ID,
+  IMAGE_CDN_URL,
+  GOOD_IMAGE_SMALL_SQUARE_SUFFIX
+} from "@/utils/constant";
+import swipeDelete from "@/components/common/wepy-swipe-delete";
+export default class ComfireOrder extends wepy.page {
+  config = {
+    navigationBarTitleText: "确认订单"
+  };
+  components = {
+    swipeDelete
+  };
+
+  data = {
+    order: {},
+    address: {},
+    shopcarts: [],
+    disablePayButton: false,
+    operating: false,
+    imageCdnUrl: IMAGE_CDN_URL,
+    imageSuffix: GOOD_IMAGE_SMALL_SQUARE_SUFFIX
+  };
+
+  async getShopcarts(ids) {
+    const json = await api.getShopcartsByIds({
+      query: {
+        shopcart_ids: ids
+      },
+      method: "GET"
+    });
+    const data = json.data;
+    if (data.success) {
+      this.shopcarts = data.shopcarts;
+    }
+    this.$apply();
+  }
+
+  async getAddressInfo(id) {
+    const json = await api.getAddressById({
+      query: {
+        id: id
+      },
+      method: "GET"
+    });
+
+    const data = json.data;
+    if (data.success) {
+      this.address = data.address;
+    }
+    this.$apply();
+  }
+
+  async getAddress() {
+    if (wepy.getStorageSync(ADDRESS_ID)) {
+      const json = await api.getAddressById({
+        query: {
+          id: wepy.getStorageSync(ADDRESS_ID)
+        },
+        method: "GET"
+      });
+      const data = json.data;
+      if (data.success && data.address && data.address._id) {
+        this.address = data.address;
+      }
+      this.$apply();
+    } else {
+      const json = await api.getUserDefaultAddress({
+        query: {},
+        method: "GET"
+      });
+      const data = json.data;
+      if (data.success && data.address && data.address._id) {
+        this.address = data.address;
+      }
+      this.$apply();
+    }
+  }
+
+  async createOrderAsync() {
+    this.disablePayButton = true;
+    if (this.order._id) {
+      this.wechatPay(this.order._id);
+    } else {
+      const json = await api.createOrderFromShopcart({
+        query: {
+          shopcart_ids: this.shopcartIds,
+          address_id: this.address._id
+        },
+        method: "POST"
+      });
+      const data = json.data;
+      if (data.success) {
+        this.order = data.order;
+        this.wechatPay(data.order._id);
+      } else {
+        this.disablePayButton = false;
+        tip.error("出错了3");
+        this.$apply();
+      }
+    }
+  }
+
+  async wechatPay(order_id) {
+    const json = await api.getPayParams({
+      query: {
+        order_id: order_id
+      }
+    });
+
+    const paydata = json.data;
+    if (paydata.success) {
+      const params = paydata.params;
+      try {
+        let requestPayment = await wepy.requestPayment({
+          timeStamp: params.timeStamp,
+          nonceStr: params.nonceStr,
+          package: params.package,
+          signType: "MD5",
+          paySign: params.paySign
+        });
+        if (requestPayment.errMsg === "requestPayment:ok") {
+          tip.success("支付成功");
+          wepy.redirectTo({
+            url: "/pages/order?tab=0"
+          });
+        }
+      } catch (error) {
+        if (error.errMsg === "requestPayment:fail cancel") {
+          tip.error("取消支付");
+          wepy.redirectTo({
+            url: "/pages/order?tab=1"
+          });
+        } else {
+          tip.error("出错了1");
+          this.disablePayButton = false;
+          this.$apply();
+        }
+      }
+    } else {
+      tip.error("出错了2");
+      this.disablePayButton = false;
+      this.$apply();
+    }
+  }
+
+  onLoad(option) {
+    if ("shopcart_ids" in option) {
+      const ids = option.shopcart_ids.split(",");
+      this.getShopcarts(ids);
+    }
+  }
+
+  onShow() {
+    this.getAddress();
+  }
+
+  computed = {
+    totalPrice() {
+      var price = 0;
+      this.shopcarts.forEach(shopcart => {
+        price += shopcart.item_count * shopcart.price_set.price;
+      });
+      return price.toFixed(2);
+    },
+    shopcartIds() {
+      var ids = [];
+      this.shopcarts.forEach(shopcart => {
+        ids.push(shopcart._id);
+      });
+      return ids;
+    }
+  };
+
+  methods = {
+    createOrder() {
+      console.log(this);
+      this.createOrderAsync();
+    },
+    bindKeyInput(e) {
+      this.sellerMessage = e.detail.value;
+      console.log("====" + e.detail.value);
+    },
+    setAddress() {
+      wepy.navigateTo({
+        url: "/pages/address?type=order"
+      });
+    }
+  };
+  events = {};
+}
+</script>
+<style lang="less">
+.address {
+  border-top: 1px solid #efefef;
+  background: #fff;
+  .empty_address,
+  .address_info {
+    display: flex;
+    justify-content: space-between;
+    height: 103rpx;
+    align-items: center;
+    padding: 0rpx 35rpx;
+    .title {
+      color: #000;
+    }
+    .arrow {
+      color: #9a9a9a;
+    }
+    .user_info {
+      color: #1a1a1a;
+    }
+    .active_address {
+      margin-top: 20rpx;
+    }
+    .defult {
+      color: #ea4a3a;
+    }
+  }
+  .address_info {
+    height: 150rpx;
+  }
+}
+
+.address_warning {
+  font-size: 15px;
+  color: #e64340;
+}
+
+.order_info {
+  .block {
+    display: flex;
+    justify-content: space-between;
+    height: 91rpx;
+    align-items: center;
+    padding: 0rpx 35rpx;
+    border-bottom: 1px solid #efefef;
+    background: #fff;
+    .txt {
+      font-size: 32rpx;
+    }
+    .left {
+      color: #000;
+    }
+    .right {
+      color: #9a9a9a;
+      text-align: right;
+    }
+    .price {
+      color: #ea4a3a;
+      font-size: 32rpx;
+    }
+    .tongji {
+      font-size: 32rpx;
+    }
+    .input_box {
+      flex: 1;
+      margin-left: 20rpx;
+    }
+    .total_jf {
+      font-size: 32rpx;
+    }
+  }
+}
+.list_box {
+  height: 250rpx;
+}
+
+.goods-info {
+  border-bottom: 1px solid #eee;
+  display: flex;
+  padding: 20rpx;
+  box-sizing: border-box;
+  position: relative;
+  background: #fff;
+}
+
+.goods-info .img-box {
+  width: 160rpx;
+  height: 160rpx;
+  overflow: hidden;
+  margin-right: 28rpx;
+  background-color: #fff;
+}
+
+.goods-info .text-box {
+  width: 480rpx;
+}
+
+.goods-info .text-box .goods-title {
+  font-size: 32rpx;
+  color: #414141;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 10rpx 20rpx 5rpx 0;
+}
+
+.goods-info .text-box .goods-label {
+  font-size: 26rpx;
+  color: #999;
+  height: 38rpx;
+  line-height: 38rpx;
+  margin: 8rpx 0 25rpx 0;
+}
+
+.goods-info .text-box .goods-price {
+  font-size: 34rpx;
+  color: #e64340;
+}
+
+.goods-info .text-box .buy-num {
+  width: 164rpx;
+  height: 48rpx;
+  line-height: 48rpx;
+  position: absolute;
+  right: 30rpx;
+  bottom: 30rpx;
+  display: flex;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.goods-info .text-box .buy-num .jian-btn {
+  width: 48rpx;
+  height: 100%;
+  border-left: 1rpx solid #ccc;
+  border-bottom: 1rpx solid #ccc;
+  border-top: 1rpx solid #ccc;
+  border-bottom-left-radius: 6rpx;
+  border-top-left-radius: 6rpx;
+}
+
+.goods-info .text-box .buy-num .jian-btn.disabled {
+  background-color: #f5f5f9;
+  border-left: 1rpx solid #eee;
+  border-bottom: 1rpx solid #eee;
+  border-top: 1rpx solid #eee;
+  color: #ccc;
+}
+
+.goods-info .text-box .buy-num .jia-btn {
+  width: 48rpx;
+  height: 100%;
+  border-right: 1rpx solid #ccc;
+  border-bottom: 1rpx solid #ccc;
+  border-top: 1rpx solid #ccc;
+  border-bottom-right-radius: 6rpx;
+  border-top-right-radius: 6rpx;
+}
+
+.goods-info .text-box .buy-num .jia-btn.disabled {
+  background-color: #f5f5f9;
+  border-right: 1rpx solid #eee;
+  border-bottom: 1rpx solid #eee;
+  border-top: 1rpx solid #eee;
+  color: #ccc;
+}
+
+.goods-info .text-box .buy-num input {
+  width: 68rpx;
+  height: 48rpx;
+  min-height: 48rpx;
+  text-align: center;
+  font-size: 24rpx;
+  border: 1rpx solid #ccc;
+}
+
+.goods-info .img-box .img {
+  width: 160rpx;
+  height: 160rpx;
+}
+
+.pay_box {
+  margin-top: 104rpx;
+  padding: 0 22rpx;
+}
+.dk-jf {
+  text-align: right;
+  color: #666;
+}
+</style>

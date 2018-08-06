@@ -6,8 +6,14 @@
 <script>
 import wepy from "wepy";
 import "wepy-async-function";
-import { TAGTRACK_ID, USER_SPECICAL_INFO,USER_INFO,SYSTEM_INFO } from "@/utils/constant";
+import {
+  TAGTRACK_ID,
+  USER_SPECICAL_INFO,
+  USER_INFO,
+  SYSTEM_INFO
+} from "@/utils/constant";
 import api from "@/api/api";
+import utils from "@/utils/util";
 
 export default class extends wepy.app {
   config = {
@@ -33,8 +39,8 @@ export default class extends wepy.app {
       "pages/collection",
       "pages/messages",
       "pages/setting",
-      "pages/goods_detail",
-      "pages/comfire_order",
+      "pages/good_detail",
+      "pages/confirm_order",
       "pages/address",
       "pages/order_detail",
       "pages/filter",
@@ -77,7 +83,7 @@ export default class extends wepy.app {
     },
     plugins: {
       wxparserPlugin: {
-        version: "0.1.0",
+        version: "0.2.1",
         provider: "wx9d4d4ffa781ff3ac"
       }
     }
@@ -87,48 +93,119 @@ export default class extends wepy.app {
 
   constructor() {
     super();
-    this.use("requestfix");
     this.use("promisify");
   }
 
   async onLaunch(option) {
-    console.log(option);
-    var that = this
+    //get system info
+    let systemInfo = wepy.getSystemInfoSync();
+    wepy.setStorageSync(SYSTEM_INFO, systemInfo);
+    //get tagtrack data
     if ("tagtrack" in option.query) {
       wepy.setStorageSync(TAGTRACK_ID, option.query.tagtrack);
     }
-    let res = await wepy.getSetting();
-    console.log(res.authSetting["scope.userInfo"])
-    if (res.authSetting["scope.userInfo"]) {
-      wx.getUserInfo({
-        success: function(res) {
-          that.login(res.userInfo);
-        }
-      });
+    if (option.query && option.query.q) {
+      let url = decodeURIComponent(option.query.q);
+      let tagtrack_id = utils.getQueryString(url, "tagtrack");
+      wepy.setStorageSync(TAGTRACK_ID, tagtrack_id);
+      console.log("tagtrack_id", tagtrack_id);
+    }
+    console.log("option", option);
+
+    let userInfo = wepy.getStorageSync(USER_INFO);
+    let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO);
+    console.log("userSpecialInfo", userSpecialInfo);
+    if (utils.isObjectEmpty(userInfo) || utils.isObjectEmpty(userSpecialInfo)) {
+      this.getSetting();
     } else {
-      wepy.navigateTo({
-        url: "/pages/authorize"
-      });
+      this.getTokenWithUnionId(userSpecialInfo.wx_unionid);
     }
   }
 
-  async login(userInfo) {
-    let login = await wepy.login();
-    let js_code = login.code;
-    let systemInfo = wepy.getSystemInfoSync();
-    wepy.setStorageSync(USER_INFO, userInfo);
-    wepy.setStorageSync(SYSTEM_INFO, systemInfo);
-    let auth = await api.wxJsCode2Token({
-      query: {
-        js_code: js_code,
-        userInfo: userInfo,
-        union_tagtrack_id: wepy.getStorageSync(TAGTRACK_ID) || ""
+  async getSetting() {
+    try {
+      let res = await wepy.getSetting();
+      console.log("wepy.getSetting()", res);
+      if (res.authSetting["scope.userInfo"]) {
+        this.getUserInfo();
+      } else {
+        wepy.navigateTo({
+          url: "/pages/authorize"
+        });
       }
-    });
-    if (auth.data.success) {
-      if (auth.data.wx_openid && auth.data.wx_unionid) {
-        wepy.setStorageSync(USER_SPECICAL_INFO, auth.data);
+    } catch (error) {
+      console.error("wepy.getSetting() ERROR", error);
+      console.log("wepy.getSetting() ERROR 应该网络不佳");
+    }
+  }
+
+  async getUserInfo() {
+    console.log("getUserInfo called");
+    try {
+      let getUserInfo = await wepy.getUserInfo();
+      console.log("wepy.getUserInfo() SUCCESS", getUserInfo);
+      if (getUserInfo.errMsg === "getUserInfo:ok") {
+        wepy.setStorageSync(USER_INFO, getUserInfo.userInfo);
+        this.wxlogin();
       }
+    } catch (error) {
+      console.error("wepy.getUserInfo() ERROR", error);
+    }
+  }
+
+  async wxlogin() {
+    console.log("wxlogin called");
+    try {
+      let login = await wepy.login();
+      console.log("wepy.login() SUCCESS", login);
+      this.getToken(login.code);
+    } catch (error) {
+      console.error("wepy.login() ERROR", error);
+    }
+  }
+
+  async getToken(js_code) {
+    try {
+      let auth = await api.wxJsCode2Token({
+        query: {
+          js_code: js_code,
+          userInfo: wepy.getStorageSync(USER_INFO),
+          union_tagtrack_id: wepy.getStorageSync(TAGTRACK_ID) || ""
+        }
+      });
+      console.log("api.wxJsCode2Token() SUCCESS", auth);
+
+      if (auth.data.success) {
+        if (auth.data.wx_openid && auth.data.wx_unionid) {
+          wepy.setStorageSync(USER_SPECICAL_INFO, auth.data);
+        }
+      }
+    } catch (error) {
+      console.error("api.wxJsCode2Token() ERROR", error);
+    }
+  }
+
+  async getTokenWithUnionId(union_id) {
+    try {
+      let auth = await api.wxJsCode2Token({
+        query: {
+          union_id: union_id
+        },
+        method: "POST"
+      });
+      console.log("api.wxJsCode2Token() SUCCESS", auth);
+      if (auth.data.success) {
+        if (auth.data.wx_openid && auth.data.wx_unionid) {
+          wepy.setStorageSync(USER_SPECICAL_INFO, auth.data);
+        }
+      } else {
+        console.error("auth.data.error", auth.data.error);
+        wepy.navigateTo({
+          url: "/pages/authorize"
+        });
+      }
+    } catch (error) {
+      console.error("api.wxJsCode2Token() ERROR", error);
     }
   }
 }

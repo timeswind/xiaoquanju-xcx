@@ -7,7 +7,7 @@
           <view class="goods-info">
             <icon class="icon_check" type="success" color="{{item.isChecked?'red':'rgb(153,153,153)'}}" @tap.stop="selectTap" data-index="{{index}}" size="20" />
             <view class="img-box">
-              <image src="{{imageCdnUrl+ item.price_set.image + '?' +  imageSuffix}}" class="img" />
+              <image src="{{item.price_set.image ? (imageCdnUrl+ item.price_set.image + '?' +  imageSuffix) : (imageCdnUrl+ item.good.images[0] + '?' +  imageSuffix) }}" class="img" />
             </view>
             <view class="text-box">
               <view class="goods-title">
@@ -48,7 +48,7 @@
       </view>
       <view class="total" hidden="{{noSelect}}">合计：¥ {{totalPrice}}</view>
     </view>
-    <view class="to-pay-btn {{noSelect?'no-select':''}}" hidden="{{!saveHidden}}" bindtap="toPayOrder">去结算</view>
+    <view class="to-pay-btn {{atLeastOneChecked?'':'no-select'}}"  bindtap="toPayOrder">去结算</view>
   </view>
 </template>
 
@@ -57,7 +57,6 @@ import wepy from "wepy";
 import api from "@/api/api";
 import tip from "@/utils/tip";
 import {
-  USER_SPECICAL_INFO,
   IMAGE_CDN_URL,
   GOOD_IMAGE_SMALL_SQUARE_SUFFIX
 } from "@/utils/constant";
@@ -83,13 +82,22 @@ export default class shopCart extends wepy.component {
           price += shopcart.item_count * shopcart.price_set.price;
         }
       });
-      return price;
+      return price.toFixed(2);
     },
     allChecked() {
       var result = true;
       this.list.forEach(shopcart => {
         if (!!shopcart.isChecked === false) {
           result = false;
+        }
+      });
+      return result;
+    },
+    atLeastOneChecked() {
+      var result = false;
+      this.list.forEach(shopcart => {
+        if (!!shopcart.isChecked === true) {
+          result = true;
         }
       });
       return result;
@@ -193,29 +201,14 @@ export default class shopCart extends wepy.component {
       this.updateGoodNum(index, item_count);
     },
     toPayOrder() {
-      let purType = 1,
-        prePurType = 1;
-      let bOneType = true;
-      let index = 0;
-      for (var i = 0; i < this.list.length; i++) {
-        if (this.list[i].ischecked) {
-          purType = this.list[i].type;
-          if (index > 0) {
-            if (purType != prePurType) {
-              bOneType = false;
-              break;
-            }
-          }
-          prePurType = purType;
-          index++;
+      var ids = [];
+      this.list.forEach(shopcart => {
+        if (shopcart.isChecked) {
+          ids.push(shopcart._id);
         }
-      }
-      if (!bOneType) {
-        tip.alert("先把补货的商品结算!");
-        return;
-      }
+      });
       wepy.navigateTo({
-        url: "/pages/comfire_order?purchasetype=" + purType
+        url: "/pages/confirm_order?shopcart_ids=" + ids
       });
     },
     goIndex() {
@@ -252,7 +245,7 @@ export default class shopCart extends wepy.component {
     overflow: hidden;
     margin-right: 20rpx;
     background-color: #fff;
-    margin-left: 100rpx;
+    margin-left: 80rpx;
   }
   .text-box {
     width: 440rpx;
@@ -265,6 +258,7 @@ export default class shopCart extends wepy.component {
     white-space: nowrap;
     overflow: hidden;
     padding: 10rpx 20rpx 5rpx 0;
+    margin-right: 32rpx;
   }
   .text-box .lable {
     font-size: 26rpx;
@@ -360,7 +354,6 @@ export default class shopCart extends wepy.component {
   position: fixed;
   bottom: 0;
   left: 0;
-  border-bottom: 1px solid #eee;
   border-top: 1px solid #eee;
   background-color: #fff;
   z-index: 9999;

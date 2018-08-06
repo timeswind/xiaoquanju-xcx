@@ -1,9 +1,9 @@
 <template>
   <view class="address">
-    <repeat for="{{list}}" key="index" index="index" item="item">
+    <repeat for="{{list}}" key="index" item="item">
       <view class="list_box">
         <swipeDelete :swipeData="item" @delItem.user="handleDelItem">
-          <view class="address_list" @tap="tapSelAddress" data-id="{{item._id}}">
+          <view class="address_list" @tap="tapSelAddress" data-id="{{item._id}}" data-index="{{index}}">
             <view class="title">
               <view class="user_info">
                 <text class="name">{{item.name}}</text>
@@ -85,12 +85,11 @@ export default class AddressList extends wepy.component {
       if (this.type != "order") {
         return;
       }
-      var id = e.currentTarget.dataset.id;
-      console.log("id==" + id);
-      wepy.setStorageSync(ADDRESS_ID, id);
-      wepy.redirectTo({
-        url: "/pages/comfire_order?from=selAdd"
-      });
+      var index = e.currentTarget.dataset.index;
+
+      wepy.setStorageSync(ADDRESS_ID, this.list[index]._id)
+
+      wepy.navigateBack();
     }
   };
 

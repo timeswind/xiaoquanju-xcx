@@ -16,15 +16,7 @@ export default class Authorize extends wepy.page {
   config = {
     navigationBarTitleText: "授权登录"
   };
-  async onLoad() {
-    let res = await wepy.getSetting();
-    console.log(res)
-    if (res.authSetting["scope.userInfo"]) {
-      wepy.switchTab({
-        url: "/pages/home"
-      });
-    }
-  }
+
   async onGotUserInfo(e) {
     if (e.detail.errMsg == "getUserInfo:ok") {
       let res = await wepy.login();
@@ -36,7 +28,7 @@ export default class Authorize extends wepy.page {
           query: {
             js_code: res.code,
             userInfo: e.detail.userInfo,
-            union_tagtrack_id: wepy.getStorageSync(TAGTRACK_ID) || ""
+            union_tagtrack_id: wepy.getStorageSync(TAGTRACK_ID) || "NO_TAGTRACK_ID"
           }
         });
         if (auth.data.success) {

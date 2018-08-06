@@ -1,5 +1,5 @@
 <template>
-  <view style="height:{{winHeight}}rpx;overflow:hidden">
+  <view style="overflow:hidden">
     <swiper indicator-dots="true" autoplay="true" interval="5000" duration="500" indicator-active-color="#ffc452" indicator-color="#efefef" class="swiper">
       <block wx:for="{{detail.images}}" item="item" wx:key="index">
         <swiper-item>
@@ -11,21 +11,9 @@
       <view class="details-title">{{detail.name}}</view>
       <view class="details-description">{{detail.description}}</view>
       <view class="details_pinfo">
-        <text class="price">￥{{detail.price}}</text>
-        <text class="strike-price">￥{{detail.strike_price}}</text>
+        <text class="price">{{detail.price ? ('￥' + detail.price) : ''}}</text>
+        <text class="strike-price" wx:if="{{detail.strike_price}}">￥{{detail.strike_price}}</text>
       </view>
-      <!-- <view class="baoyou">满{{detail.freeShipNum}}件包邮</view> -->
-    </view>
-    <view class="order_num">
-      <!-- <view class="doc" wx:if="{{special == 1}}">库存:
-        <text class="num">{{detail.stockNum}}件</text>
-      </view> -->
-      <!-- <view class="doc" wx:else>规定单数:
-        <text class="num">{{detail.minBuyNum}}件成团</text>
-      </view>
-      <view class="doc">订单中:
-        <text class="num">已拼{{detail.saleCount}}件</text>
-      </view> -->
     </view>
     <!-- <view class="block">
       <view class="block_title">拼货流程</view>
@@ -57,6 +45,13 @@
       </view>
     </view> -->
     <view class="spacing"></view>
+    <view class="block" @tap="takeCart">
+      <view style="display: flex; flex-direction: row; font-size: 15px;margin: 0 8px;color: #666; justify-content:space-between;">
+        <text>选择(规格/价格组合)</text>
+        <text>{{selectedPriceSet ? selectedPriceSet.name : ""}}</text>
+      </view>
+    </view>
+    <view class="spacing"></view>
     <view class="block">
       <view class="block_title">商品信息</view>
       <view class="block_content">
@@ -72,18 +67,19 @@
       <view class="block_title">商品详情</view>
     </view>
     <view class="big_images">
-      <view class="doc">
-        <view class="wxParse-p">
-
-        </view>
-      </view>
+      <wxparser rich-text="{{detail.detail}}" />
     </view>
-    <view class="detail-bottom">
+    <view class="detail-bottom  {{isIphoneX ?'fix-iphonex-button':''}}">
       <view class="bottom-box">
-
+        <view class="item" @tap="homePage">
+          <i class="iconfont icon-home"></i>
+          <view class="doc">首页</view>
+        </view>
+        <view class="item">
         <contact-button class="contact">
-          <text style="margin-left: 8px">客服</text>
+          <text class="contact-text">客服</text>
         </contact-button>
+        </view>
         <!-- <view class="item {{isFavorite?'selec_active':''}}" @tap="takeFavorite">
           <i class="iconfont icon-collection"></i>
           <view class="doc">收藏</view>
@@ -97,7 +93,7 @@
       <view class="model_content">
         <view class="head_box">
           <view class="img_wrap" wx:if="{{detail.images}}">
-            <image class="goods_img" src="{{selectedPriceSet.image ? (imageCdnUrl+ selectedPriceSet.image + '?' +  homeDiscvoverGoodsSuffix) : (imageCdnUrl+ detail.images[0] + '?' +  homeDiscvoverGoodsSuffix)}}" />
+            <image class="goods_img" src="{{selectedPriceSet.image ? (imageCdnUrl+ selectedPriceSet.image + '?' +  goodImageSmallSquareSuffix) : (imageCdnUrl+ detail.images[0] + '?' +  goodImageSmallSquareSuffix)}}" />
           </view>
           <view class="product_wrap">
             <view class="price">价格￥{{priceSetSelected ? selectedPriceSet.price : detail.price}}</view>
@@ -119,7 +115,6 @@
           </view>
           <view class="num_box">
             <view class="title">数量</view>
-            <!-- <view class="stock">库存:{{detail.stockNum}}件</view> -->
             <view class="buy-num">
               <view class="jian-btn {{item.number==1? 'disabled' : ''}}" catchtap="jianBtnTap" data-index="{{index}}">-</view>
               <input type="number" value="{{orderCount}}" />
@@ -128,7 +123,7 @@
           </view>
         </scroll-view>
         <view class="colse_model" @tap="closeModel"><i class="iconfont icon-close"></i></view>
-              <button class="comfire_btn" @tap.stop="confirmTake" disabled="{{!priceSetSelected}}">确定</button>
+              <button class="comfire_btn" @tap.stop="confirmTakeToShoppingCart" disabled="{{!priceSetSelected}}">加入购物车</button>
         </view>
     </view>
   </view>
@@ -139,10 +134,12 @@ import {
   SYSTEM_INFO,
   USER_SPECICAL_INFO,
   IMAGE_CDN_URL,
-  HOME_DISCOVER_GOOD_SUFFIX
+  HOME_DISCOVER_GOOD_SUFFIX,
+  GOOD_IMAGE_SMALL_SQUARE_SUFFIX
 } from "@/utils/constant";
 import tip from "@/utils/tip";
 import api from "@/api/api";
+import utils from "@/utils/util";
 import CommentList from "../components/comment_list";
 import timer from "@/components/common/timer";
 export default class goodsDetail extends wepy.page {
@@ -153,8 +150,7 @@ export default class goodsDetail extends wepy.page {
     }
   };
   data = {
-    winWidth: 0,
-    winHeight: "100%",
+    isIphoneX: false,
     goodsId: 0,
     detail: {},
     hidden: true,
@@ -162,33 +158,9 @@ export default class goodsDetail extends wepy.page {
     animationData: null,
     orderCount: 1,
     purchaseText: "立即购买",
-    commentList: [
-      {
-        url: "../images/icon_nav_01_new.png",
-        name: "浪子天涯",
-        time: "2017-10-01 10:10",
-        content:
-          "东西收到,很满意!!真的是超级好的卖家,解答疑问不厌其烦,细致认真,关键是东西好,而且货物发得超快,包装仔细,值得信赖!",
-        start: 4.5,
-        children: [
-          {
-            content:
-              "跟你交易次次都这么成功和开心的．．希望我们以后有更多的交易吧．．．哈哈"
-          }
-        ]
-      },
-      {
-        url: "../images/icon_nav_02_new.png",
-        name: "勇闯天下",
-        time: "2017-10-01 10:10",
-        content:
-          "太感谢了，衣服很漂亮，朋友很喜欢，最主要的是买家太好了~~~大大的赞一个。。。 衣服，很合身",
-        start: 4,
-        children: []
-      }
-    ],
     imageCdnUrl: IMAGE_CDN_URL,
-    homeDiscvoverGoodsSuffix: HOME_DISCOVER_GOOD_SUFFIX
+    homeDiscvoverGoodsSuffix: HOME_DISCOVER_GOOD_SUFFIX,
+    goodImageSmallSquareSuffix: GOOD_IMAGE_SMALL_SQUARE_SUFFIX
   };
 
   components = {
@@ -221,8 +193,21 @@ export default class goodsDetail extends wepy.page {
       return price_set_selected;
     }
   };
+
   onLoad(option) {
-    this.goodsId = option.id;
+    if (wepy.getStorageSync(SYSTEM_INFO).model.indexOf("iPhone X") >= 0) {
+      this.isIphoneX = true;
+    }
+    console.log("good detail onload option==" + JSON.stringify(option));
+    if (option.id) {
+      this.goodsId = option.id;
+    }
+    if (option.q) {
+      let url = decodeURIComponent(option.q);
+      this.goodsId = utils.getQueryString(url, "id");
+      console.log("other", utils.getQueryString(url, "other"));
+    }
+    this.$apply()
     this.getGoodsDetail();
   }
 
@@ -325,12 +310,11 @@ export default class goodsDetail extends wepy.page {
       this.overModelHide = false;
       this.hidden = false;
       this.$apply();
-      animation.height(416).step();
+      animation.height(600).step();
       this.animationData = animation.export({ duration: 400 });
       this.$apply();
     },
-
-    confirmTake() {
+    confirmTakeToShoppingCart() {
       const newShopCartData = {
         good: this.goodsId,
         price_set: this.selectedPriceSet,
@@ -353,7 +337,7 @@ export default class goodsDetail extends wepy.page {
       }
       return {
         title: this.detail.name,
-        path: "/pages/goods_detail?id=" + this.goodsId,
+        path: "/pages/good_detail?id=" + this.goodsId,
         success: function(res) {
           // 转发成功
         },
@@ -376,6 +360,7 @@ export default class goodsDetail extends wepy.page {
 }
 
 .big_images {
+  background: #fff;
   height: 100%;
   display: block;
   margin-bottom: 90rpx;
@@ -393,14 +378,13 @@ export default class goodsDetail extends wepy.page {
     width: 100%;
     box-sizing: border-box;
     position: relative;
-    font-size: 30rpx;
+    font-size: 18px;
     color: #333;
   }
   .details-description {
     color: #999;
-    font-size: 28rpx;
-    line-height: 40rpx;
-    margin-top: 20rpx;
+    font-size: 16px;
+    margin-top: 16rpx;
   }
   .details-introduction {
     color: #999;
@@ -522,6 +506,13 @@ export default class goodsDetail extends wepy.page {
       height: 80rpx;
       line-height: 80rpx;
       margin: 0 auto;
+    }
+
+    .contact-text {
+      margin-top: 14px;
+      font-size: 12px;
+      float: left;
+      margin-right: -21px;
     }
   }
   .sy-bottom {
@@ -699,6 +690,8 @@ export default class goodsDetail extends wepy.page {
   background: #fff;
   bottom: 0;
   height: 0;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .model_content {
@@ -708,11 +701,11 @@ export default class goodsDetail extends wepy.page {
 
 .colse_model {
   position: absolute;
-  right: 10rpx;
-  top: 10rpx;
+  right: 16rpx;
+  top: 32rpx;
   .icon-close {
-    color: #e11500;
-    font-size: 32rpx;
+    color: #aaa;
+    font-size: 48rpx;
   }
 }
 

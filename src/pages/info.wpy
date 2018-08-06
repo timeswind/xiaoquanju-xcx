@@ -72,41 +72,12 @@ export default class Index extends wepy.page {
     nickName: "",
     bShowBind: false
   };
-  async getUserInfo(phone, code) {
-    // let that = this;
-    // let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {};
-    // let openId = userSpecialInfo.openid;
-    // const json = await api.getUserInfo({
-    //   query: {
-    //     openId: openId
-    //   }
-    // });
-    // if (json.data.code == 0) {
-    //   if (json.data.user.mobile.length>0) {
-    //     this.bShowBind=false;
-    //   } else {
-    //     this.bShowBind = true;
-    //   }
-    //   that.$apply();
-    // } else {
-    //   tip.error(json.data.msg)
-    // }
-    // that.showLoading = false;
-  }
-
   onLoad() {
     let that = this;
     let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO);
     that.avatarUrl = userSpecialInfo.avatar;
     that.nickName = userSpecialInfo.name;
   }
-  onShow() {
-    let that = this;
-    this.getUserInfo();
-  }
-  computed = {};
-  methods = {};
-  events = {};
 }
 </script>
 <style lang="less">
