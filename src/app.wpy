@@ -2,6 +2,7 @@
 @import "./styles/base";
 @import "./styles/icon";
 @import "./styles/style";
+@import "./zanui/index.wxss";
 </style>
 <script>
 import wepy from "wepy";
@@ -23,30 +24,13 @@ export default class extends wepy.app {
       "pages/classify",
       "pages/shop_cart",
       "pages/info",
-      "pages/search",
-      "pages/test",
-      "pages/sign_in",
-      "pages/exchange_goods",
-      "pages/wholesale",
-      "pages/replenishment_goods",
-      "pages/register",
       "pages/order",
-      "pages/reorder",
-      "pages/pay_success",
-      "pages/points",
-      "pages/points_more",
-      "pages/points_rule",
       "pages/collection",
-      "pages/messages",
       "pages/setting",
       "pages/good_detail",
       "pages/confirm_order",
       "pages/address",
       "pages/order_detail",
-      "pages/filter",
-      "pages/logistics",
-      "pages/comment",
-      "pages/comment_add",
       "pages/authorize"
     ],
     window: {
@@ -58,26 +42,34 @@ export default class extends wepy.app {
       backgroundColor: "#EFEFEF"
     },
     tabBar: {
-      color: "#999999",
-      selectedColor: "#ff6a3c",
+      color: "#515151",
+      selectedColor: "#38a760",
       backgroundColor: "#ffffff",
       borderStyle: "black",
       list: [
         {
           pagePath: "pages/home",
-          text: "首页"
+          text: "首页",
+          iconPath: "images/home.png",
+          selectedIconPath: "images/home_fill.png"
         },
         {
           pagePath: "pages/classify",
-          text: "分类"
+          text: "分类",
+          iconPath: "images/category.png",
+          selectedIconPath: "images/category_fill.png"
         },
         {
           pagePath: "pages/shop_cart",
-          text: "购物车"
+          text: "购物车",
+          iconPath: "images/cart.png",
+          selectedIconPath: "images/cart_fill.png"
         },
         {
           pagePath: "pages/info",
-          text: "我"
+          text: "我",
+          iconPath: "images/people.png",
+          selectedIconPath: "images/people_fill.png"
         }
       ]
     },
@@ -93,6 +85,7 @@ export default class extends wepy.app {
 
   constructor() {
     super();
+    this.use("requestfix");
     this.use("promisify");
   }
 
@@ -127,9 +120,11 @@ export default class extends wepy.app {
       let res = await wepy.getSetting();
       console.log("wepy.getSetting()", res);
       if (res.authSetting["scope.userInfo"]) {
+        console.log(res.authSetting["scope.userInfo"]);
         this.getUserInfo();
       } else {
-        wepy.navigateTo({
+        console.log("naviagte to page authorize");
+        wx.navigateTo({
           url: "/pages/authorize"
         });
       }
@@ -146,29 +141,31 @@ export default class extends wepy.app {
       console.log("wepy.getUserInfo() SUCCESS", getUserInfo);
       if (getUserInfo.errMsg === "getUserInfo:ok") {
         wepy.setStorageSync(USER_INFO, getUserInfo.userInfo);
-        this.wxlogin();
+        this.wxlogin(getUserInfo);
       }
     } catch (error) {
       console.error("wepy.getUserInfo() ERROR", error);
     }
   }
 
-  async wxlogin() {
+  async wxlogin(userInfo) {
     console.log("wxlogin called");
     try {
       let login = await wepy.login();
       console.log("wepy.login() SUCCESS", login);
-      this.getToken(login.code);
+      this.getToken(login.code, userInfo);
     } catch (error) {
       console.error("wepy.login() ERROR", error);
     }
   }
 
-  async getToken(js_code) {
+  async getToken(js_code, userInfo) {
     try {
       let auth = await api.wxJsCode2Token({
         query: {
           js_code: js_code,
+          encryptedData: userInfo.encryptedData,
+          iv: userInfo.iv,
           userInfo: wepy.getStorageSync(USER_INFO),
           union_tagtrack_id: wepy.getStorageSync(TAGTRACK_ID) || ""
         }

@@ -112,6 +112,7 @@ export default class shopCart extends wepy.component {
     }
     this.$apply();
   }
+  
   onLoad() {
     let that = this;
     this.operating = false;

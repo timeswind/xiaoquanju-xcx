@@ -122,7 +122,9 @@
             </view>
           </view>
         </scroll-view>
-        <view class="colse_model" @tap="closeModel"><i class="iconfont icon-close"></i></view>
+        <view class="colse_model" @tap="closeModel">
+          <zan-icon type="close"></zan-icon>
+          </view>
               <button class="comfire_btn" @tap.stop="confirmTakeToShoppingCart" disabled="{{!priceSetSelected}}">加入购物车</button>
         </view>
     </view>
@@ -146,7 +148,8 @@ export default class goodsDetail extends wepy.page {
   config = {
     navigationBarTitleText: "商品详情",
     usingComponents: {
-      wxparser: "plugin://wxparserPlugin/wxparser"
+      wxparser: "plugin://wxparserPlugin/wxparser",
+      "zan-icon": "../zanui/icon/index"
     }
   };
   data = {
@@ -207,7 +210,7 @@ export default class goodsDetail extends wepy.page {
       this.goodsId = utils.getQueryString(url, "id");
       console.log("other", utils.getQueryString(url, "other"));
     }
-    this.$apply()
+    this.$apply();
     this.getGoodsDetail();
   }
 
@@ -242,6 +245,8 @@ export default class goodsDetail extends wepy.page {
     if (data.success) {
       tip.success("添加成功");
       this.closeModel();
+    } else {
+      console.log("添加到购物车失败", json);
     }
   }
 
