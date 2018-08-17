@@ -41,19 +41,7 @@ function vailPhone(number) {
   }
   return flag;
 }
-//验证是否西班牙手机(6开头 9位数)
-function ifSpanish(number) {
-  let flag = false;
-  let myreg = /^([6|7|9]{1}(\d+){8})$/;
-  if (number.length != 9) {
-    flag = flag;
-  } else if (!myreg.test(number)) {
-    flag = flag;
-  } else {
-    flag = true;
-  }
-  return flag;
-}
+
 //浮点型除法
 function div(a, b) {
   var c, d, e = 0,
@@ -146,43 +134,16 @@ let isObjectEmpty = function (obj) {
   return true;
 }
 
-function WXBizDataCrypt(sessionKey) {
-  this.appId = "wxb3ff1fcb37b94be1"
-  this.sessionKey = sessionKey
-}
-
-WXBizDataCrypt.prototype.decryptData = function (encryptedData, iv) {
-  // base64 decode
-  var sessionKey = new Buffer(this.sessionKey, 'base64')
-  encryptedData = new Buffer(encryptedData, 'base64')
-  iv = new Buffer(iv, 'base64')
-
-  try {
-     // 解密
-    var decipher = crypto.createDecipheriv('aes-128-cbc', sessionKey, iv)
-    // 设置自动 padding 为 true，删除填充补位
-    decipher.setAutoPadding(true)
-    var decoded = decipher.update(encryptedData, 'binary', 'utf8')
-    decoded += decipher.final('utf8')
-    
-    decoded = JSON.parse(decoded)
-
-  } catch (err) {
-    throw new Error('Illegal Buffer')
+let timeDifference = function (date1, date2) {
+  if (date2 < date1) {
+    date2.setDate(date2.getDate() + 1);
   }
 
-  if (decoded.watermark.appid !== this.appId) {
-    throw new Error('Illegal Buffer')
-  }
-
-  return decoded
+  return date2 - date1
 }
-
-module.exports = WXBizDataCrypt
-
 
 module.exports = {
-  WXBizDataCrypt: WXBizDataCrypt,
+  timeDifference: timeDifference,
   isObjectEmpty: isObjectEmpty,
   getQueryString: getQueryString,
   getCurrentTime: getCurrentTime,
@@ -191,7 +152,6 @@ module.exports = {
   sTrim: sTrim,
   replaceMaohao: replaceMaohao,
   vailPhone: vailPhone,
-  ifSpanish: ifSpanish,
   div: div,
   mul: mul,
   accAdd: accAdd,

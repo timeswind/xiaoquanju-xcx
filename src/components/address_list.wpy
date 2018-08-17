@@ -20,8 +20,8 @@
       </view>
     </repeat>
   </view>
-  <view class="add_wrap">
-    <view class="button type_red" @tap="add">新增地址</view>
+  <view class="add_wrap  {{isIphoneX ?'fix-iphonex-button':''}}">
+      <view class="button type_red" @tap="add">新增地址</view>
   </view>
 </template>
 <script>
@@ -43,7 +43,8 @@ export default class AddressList extends wepy.component {
 
   data = {
     receiverInfo: {},
-    type: ""
+    type: "",
+    isIphoneX: false
   };
 
   async delUserAddress(id) {
@@ -93,7 +94,11 @@ export default class AddressList extends wepy.component {
     }
   };
 
-  onLoad() {}
+  onLoad() {
+    if (this.$root.$parent.globalData.isIphoneX) {
+      this.isIphoneX = true;
+    }
+  }
 }
 </script>
 <style lang="less">
@@ -140,12 +145,9 @@ export default class AddressList extends wepy.component {
 }
 
 .add_wrap {
-  width: 95%;
-  left: 0;
-  right: 0;
+  width: 100%;
   position: fixed;
-  bottom: 20rpx;
-  margin: 0 auto;
+  bottom: 0;
   z-index: 999;
 }
 </style>

@@ -17,7 +17,7 @@
   "author": "Mingtian Yang <tswymt@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "wepy": "^1.7.2",
+    "wepy": "^1.7.2-alpha1",
     "wepy-async-function": "^1.4.4",
     "wepy-com-toast": "^1.0.2",
     "wx-promise-request": "^2.1.3"

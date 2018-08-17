@@ -1,7 +1,4 @@
 <style lang="less">
-@import "./styles/base";
-@import "./styles/icon";
-@import "./styles/style";
 @import "./zanui/index.wxss";
 </style>
 <script>
@@ -81,7 +78,9 @@ export default class extends wepy.app {
     }
   };
 
-  globalData = {};
+  globalData = {
+    isIphoneX: false
+  };
 
   constructor() {
     super();
@@ -89,10 +88,13 @@ export default class extends wepy.app {
     this.use("promisify");
   }
 
-  async onLaunch(option) {
+  onLaunch(option) {
     //get system info
     let systemInfo = wepy.getSystemInfoSync();
     wepy.setStorageSync(SYSTEM_INFO, systemInfo);
+    if (systemInfo.model.indexOf("iPhone X") >= 0) {
+      this.globalData.isIphoneX = true;
+    }
     //get tagtrack data
     if ("tagtrack" in option.query) {
       wepy.setStorageSync(TAGTRACK_ID, option.query.tagtrack);
@@ -121,12 +123,10 @@ export default class extends wepy.app {
       console.log("wepy.getSetting()", res);
       if (res.authSetting["scope.userInfo"]) {
         console.log(res.authSetting["scope.userInfo"]);
-        this.getUserInfo();
+        this.wxlogin();
       } else {
         console.log("naviagte to page authorize");
-        wx.navigateTo({
-          url: "/pages/authorize"
-        });
+        this.toAuthorize();
       }
     } catch (error) {
       console.error("wepy.getSetting() ERROR", error);
@@ -134,26 +134,33 @@ export default class extends wepy.app {
     }
   }
 
-  async getUserInfo() {
+  async toAuthorize() {
+    console.log(wx);
+    wx.navigateTo({
+      url: "/pages/authorize"
+    });
+  }
+
+  async getUserInfo(js_code) {
     console.log("getUserInfo called");
     try {
       let getUserInfo = await wepy.getUserInfo();
       console.log("wepy.getUserInfo() SUCCESS", getUserInfo);
       if (getUserInfo.errMsg === "getUserInfo:ok") {
         wepy.setStorageSync(USER_INFO, getUserInfo.userInfo);
-        this.wxlogin(getUserInfo);
+        this.getToken(js_code, getUserInfo);
       }
     } catch (error) {
       console.error("wepy.getUserInfo() ERROR", error);
     }
   }
 
-  async wxlogin(userInfo) {
+  async wxlogin() {
     console.log("wxlogin called");
     try {
       let login = await wepy.login();
       console.log("wepy.login() SUCCESS", login);
-      this.getToken(login.code, userInfo);
+      this.getUserInfo(login.code);
     } catch (error) {
       console.error("wepy.login() ERROR", error);
     }

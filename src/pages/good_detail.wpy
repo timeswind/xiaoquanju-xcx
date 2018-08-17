@@ -3,7 +3,7 @@
     <swiper indicator-dots="true" autoplay="true" interval="5000" duration="500" indicator-active-color="#ffc452" indicator-color="#efefef" class="swiper">
       <block wx:for="{{detail.images}}" item="item" wx:key="index">
         <swiper-item>
-          <image src="{{imageCdnUrl+ item + '?' +  homeDiscvoverGoodsSuffix}}" data-src="{{imageCdnUrl+ item + '?' +  homeDiscvoverGoodsSuffix}}" class="slide-image" @tap="previewImage" />
+          <image src="{{imageCdnUrl+ item + '?' +  homeDiscvoverGoodsSuffix}}" data-src="{{imageCdnUrl+ item + '?' +  homeDiscvoverGoodsSuffix}}" class="slide-image" @tap="previewImage" mode="aspectFill" />
         </swiper-item>
       </block>
     </swiper>
@@ -45,7 +45,7 @@
       </view>
     </view> -->
     <view class="spacing"></view>
-    <view class="block" @tap="takeCart">
+    <view class="block" @tap="openSelection">
       <view style="display: flex; flex-direction: row; font-size: 15px;margin: 0 8px;color: #666; justify-content:space-between;">
         <text>选择(规格/价格组合)</text>
         <text>{{selectedPriceSet ? selectedPriceSet.name : ""}}</text>
@@ -72,7 +72,7 @@
     <view class="detail-bottom  {{isIphoneX ?'fix-iphonex-button':''}}">
       <view class="bottom-box">
         <view class="item" @tap="homePage">
-          <i class="iconfont icon-home"></i>
+          <zan-icon type="home"></zan-icon>
           <view class="doc">首页</view>
         </view>
         <view class="item">
@@ -84,13 +84,16 @@
           <i class="iconfont icon-collection"></i>
           <view class="doc">收藏</view>
         </view> -->
-        <view class="sy-bottom btn_cart" @tap="takeCart">加入购物车</view>
-        <!-- <view class="sy-bottom {{canOrder?'btn_order':'order_color'}}" @tap="takeOrder">{{purchaseText}}</view> -->
+        <view class="sy-bottom btn_cart" @tap="openSelection">加入购物车</view>
+        <view class="sy-bottom order_color" @tap="openSelection">立即购买</view>
       </view>
     </view>
     <view class="over_model {{overModelHide?'hidden':''}}"></view>
     <view class="panle_model {{hidden?'hidden':''}}" animation="{{animationData}}">
       <view class="model_content">
+          <view class="colse_model" @tap="closeModel">
+          <zan-icon type="close"></zan-icon>
+          </view>
         <view class="head_box">
           <view class="img_wrap" wx:if="{{detail.images}}">
             <image class="goods_img" src="{{selectedPriceSet.image ? (imageCdnUrl+ selectedPriceSet.image + '?' +  goodImageSmallSquareSuffix) : (imageCdnUrl+ detail.images[0] + '?' +  goodImageSmallSquareSuffix)}}" />
@@ -109,7 +112,7 @@
               wx:for-item="price_set"
               wx:key="index" 
               data-index="{{index}}"
-              @tap.stop="selectPriceSet">
+              @tap.stop="selectPriceSetByClick">
               {{price_set.name}}</view>
             </view>
           </view>
@@ -122,11 +125,15 @@
             </view>
           </view>
         </scroll-view>
-        <view class="colse_model" @tap="closeModel">
-          <zan-icon type="close"></zan-icon>
-          </view>
-              <button class="comfire_btn" @tap.stop="confirmTakeToShoppingCart" disabled="{{!priceSetSelected}}">加入购物车</button>
         </view>
+            <zan-row>
+              <zan-col col="12">
+                <view class="confirm-addtocart-btn" @tap.stop="confirmTakeToShoppingCart">加入购物车</view>
+              </zan-col>
+              <zan-col col="12">
+                <view class="confirm-buy-btn" @tap.stop="confirmBuy">立即购买</view>
+              </zan-col>
+            </zan-row>
     </view>
   </view>
 </template>
@@ -137,7 +144,8 @@ import {
   USER_SPECICAL_INFO,
   IMAGE_CDN_URL,
   HOME_DISCOVER_GOOD_SUFFIX,
-  GOOD_IMAGE_SMALL_SQUARE_SUFFIX
+  GOOD_IMAGE_SMALL_SQUARE_SUFFIX,
+  TEMPORARY_ORDER_DATA
 } from "@/utils/constant";
 import tip from "@/utils/tip";
 import api from "@/api/api";
@@ -149,7 +157,9 @@ export default class goodsDetail extends wepy.page {
     navigationBarTitleText: "商品详情",
     usingComponents: {
       wxparser: "plugin://wxparserPlugin/wxparser",
-      "zan-icon": "../zanui/icon/index"
+      "zan-icon": "../zanui/icon/index",
+      "zan-row": "../zanui/row/index",
+      "zan-col": "../zanui/col/index"
     }
   };
   data = {
@@ -160,15 +170,13 @@ export default class goodsDetail extends wepy.page {
     overModelHide: true,
     animationData: null,
     orderCount: 1,
-    purchaseText: "立即购买",
     imageCdnUrl: IMAGE_CDN_URL,
     homeDiscvoverGoodsSuffix: HOME_DISCOVER_GOOD_SUFFIX,
     goodImageSmallSquareSuffix: GOOD_IMAGE_SMALL_SQUARE_SUFFIX
   };
 
   components = {
-    commentList: CommentList,
-    timer: timer
+    commentList: CommentList
   };
 
   computed = {
@@ -264,22 +272,33 @@ export default class goodsDetail extends wepy.page {
       this.$apply();
     }, 300);
   }
+  selectPriceSet(index) {
+    var price_sets = this.detail.price_sets;
+
+    if (price_sets[index]["selected"]) {
+      price_sets[index]["selected"] = false;
+    } else {
+      for (var i = 0; i < price_sets.length; i++) {
+        price_sets[i]["selected"] = false;
+      }
+      price_sets[index]["selected"] = true;
+    }
+    this.detail.price_sets = price_sets;
+  }
+
+  async takeToOrderConfirm(shopcartData) {
+    var ids = [];
+    wepy.setStorageSync(TEMPORARY_ORDER_DATA, shopcartData)
+
+    wepy.navigateTo({
+      url: `/pages/confirm_order?from_good_detail=true`
+    });
+  }
 
   methods = {
-    selectPriceSet(e) {
+    selectPriceSetByClick(e) {
       let index = e.target.dataset.index;
-      var price_sets = this.detail.price_sets;
-
-      if (price_sets[index]["selected"]) {
-        price_sets[index]["selected"] = false;
-      } else {
-        for (var i = 0; i < price_sets.length; i++) {
-          price_sets[i]["selected"] = false;
-        }
-        price_sets[index]["selected"] = true;
-      }
-      this.detail.price_sets = price_sets;
-      this.$apply();
+      this.selectPriceSet(index);
     },
     homePage() {
       wepy.switchTab({
@@ -304,8 +323,10 @@ export default class goodsDetail extends wepy.page {
         urls: imageArry
       });
     },
-
-    takeCart() {
+    openSelection() {
+      if (!this.priceSetSelected) {
+        this.selectPriceSet(0);
+      }
       var animation = wx.createAnimation({
         transformOrigin: "50% 50%",
         duration: 400,
@@ -314,10 +335,9 @@ export default class goodsDetail extends wepy.page {
       });
       this.overModelHide = false;
       this.hidden = false;
-      this.$apply();
       animation.height(600).step();
-      this.animationData = animation.export({ duration: 400 });
       this.$apply();
+      this.animationData = animation.export({ duration: 400 });
     },
     confirmTakeToShoppingCart() {
       const newShopCartData = {
@@ -327,6 +347,14 @@ export default class goodsDetail extends wepy.page {
       };
 
       this.addToShoppingCart(newShopCartData);
+    },
+    confirmBuy() {
+      const newShopCartData = {
+        good: this.detail,
+        price_set: this.selectedPriceSet,
+        item_count: this.orderCount
+      };
+      this.takeToOrderConfirm(newShopCartData);
     },
     jiaBtnTap(e) {
       this.orderCount++;
@@ -508,14 +536,13 @@ export default class goodsDetail extends wepy.page {
     justify-content: flex-end;
     position: relative;
     .contact {
-      height: 80rpx;
-      line-height: 80rpx;
-      margin: 0 auto;
+      height: 37px;
+      line-height: 50rpx;
     }
 
     .contact-text {
-      margin-top: 14px;
-      font-size: 12px;
+      margin-top: 16px;
+      font-size: 26rpx;
       float: left;
       margin-right: -21px;
     }
@@ -526,22 +553,16 @@ export default class goodsDetail extends wepy.page {
     line-height: 60rpx;
     font-size: 30rpx;
   }
-  .btn_order {
-    background: #ff4856;
-    color: #fff;
-  }
+
   .btn_cart {
-    color: #fff;
-    background: #ff6e30;
+    color: #333;
+    background: #fff0b5;
   }
   .order_color {
-    background: #a9a9a9;
+    background: #38a760;
     color: #fff;
   }
-  .cart_color {
-    color: #fff;
-    background: #a9a9a9;
-  }
+
   .item:first-child {
     border-right: 1px solid #efefef;
   }
@@ -582,11 +603,14 @@ export default class goodsDetail extends wepy.page {
     height: 200rpx;
     width: 200rpx;
     background: #000;
+    border-radius: 5px;
   }
   .goods_img {
     height: 200rpx;
     width: 200rpx;
     background: #fff;
+    border-radius: 5px;
+    border: 1px solid #eee;
   }
   .product_wrap {
     padding: 0 0 0 32rpx;
@@ -623,7 +647,7 @@ export default class goodsDetail extends wepy.page {
     border-radius: 10rpx;
   }
   .active {
-    background: #ed394a;
+    background: #38a760;
     color: #fff;
   }
 }
@@ -697,6 +721,9 @@ export default class goodsDetail extends wepy.page {
   height: 0;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .model_content {
@@ -714,15 +741,18 @@ export default class goodsDetail extends wepy.page {
   }
 }
 
-.comfire_btn {
-  height: 100rpx;
-  line-height: 100rpx;
-  width: 100%;
-  background: #ff6e30;
+.confirm-buy-btn {
   text-align: center;
+  padding: 16px 0;
+  background: #38a760;
   color: #fff;
-  bottom: 0;
-  z-index: 10003;
+}
+
+.confirm-addtocart-btn {
+  text-align: center;
+  color: #333;
+  background: #fff0b5;
+  padding: 16px 0;
 }
 
 .button-more-cmment {

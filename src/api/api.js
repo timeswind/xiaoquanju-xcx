@@ -2,11 +2,9 @@ import {
   apiRequest
 } from '@/utils/wxRequest';
 
-// const apiMall = 'https://sujiefs.com/'
-const apiXQJ = 'https://api.xiaoquanjia.com'
-// const apiXQJ = 'https://www.baidu.com'
+// const apiXQJ = 'https://api.xiaoquanjia.com'
 
-// const apiXQJ = 'http://localhost:4200'
+const apiXQJ = 'http://localhost:4200'
 
 const wxJsCode2Token = (params) => apiRequest(params, apiXQJ + "/api/public/wx_xcx_login");
 
@@ -29,19 +27,24 @@ const deleteShopcart = (params) => apiRequest(params, apiXQJ + '/api/protect/sho
 
 const getPayParams = (params) => apiRequest(params, apiXQJ + '/api/protect/wechat_pay_params');
 const createOrderFromShopcart = (params) => apiRequest(params, apiXQJ + '/api/protect/order/from_shopcart');
+const createOrderFromGoodDetail = (params) => apiRequest(params, apiXQJ + '/api/protect/order/from_good_detail');
+
 const getAllOrders = (params) => apiRequest(params, apiXQJ + '/api/protect/orders/all');
 const getUnpaidOrders = (params) => apiRequest(params, apiXQJ + '/api/protect/orders/unpaid');
 const getPaidOrders = (params) => apiRequest(params, apiXQJ + '/api/protect/orders/paid');
 const getCompleteOrders = (params) => apiRequest(params, apiXQJ + '/api/protect/orders/complete');
 const getOrderDetail = (params) => apiRequest(params, apiXQJ + '/api/protect/order/detail');
+const recheckOrder = (params) => apiRequest(params, apiXQJ + '/api/public/order_recheck');
 
 export default {
+  recheckOrder,
   getOrderDetail,
   getAllOrders,
   getUnpaidOrders,
   getPaidOrders,
   getCompleteOrders,
   createOrderFromShopcart,
+  createOrderFromGoodDetail,
   getPayParams,
   getHomeGoods,
   getGoodDetail,

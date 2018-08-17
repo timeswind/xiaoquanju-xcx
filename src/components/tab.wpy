@@ -21,38 +21,14 @@ export default class Filter extends wepy.component {
   }
 
   methods = {
-    /**
-     * 点击tab切换
-     */
     swichNav(e) {
-      let that = this;
       if (this.data.currentTab == e.target.dataset.current) {
         return false;
       } else {
-        that.currentTab = e.target.dataset.current;
-        that.$apply();
+        this.currentTab = e.target.dataset.current;
       }
-      this.$emit("currentTab", that.currentTab)
+      this.$emit("currentTab", this.currentTab)
     },
-    /**
-     * 头部红点标识
-     * @param  {[type]} dotList [description]
-     * @return {[type]}         [description]
-     */
-    changeList(dotList) {
-      this.tabList = dotList;
-    }
-  }
-
-
-  onLoad() {
-    let that = this;
-
-  }
-  watch = {
-    currentTab(newValue, oldValue) {
-      console.log(`currentTab value: ${oldValue} -> ${newValue}`)
-    }
   }
 }
 

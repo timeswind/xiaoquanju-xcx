@@ -5,11 +5,9 @@ import { USER_SPECICAL_INFO } from './constant';
 const apiRequest = async (params = {}, url) => {
     const apiRequestType = url.split("/")[4]
     var header = { 'Content-Type': 'application/json' }
-    console.log(url)
-    console.log(wepy.getStorageSync(USER_SPECICAL_INFO))
+    console.log("request", url)
     if (apiRequestType !== 'public') {
         const userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {};
-        console.log("apiRequestType", userSpecialInfo)
         if (userSpecialInfo.token) {
             const token = userSpecialInfo.token
             header["Authorization"] = "Bearer " + token

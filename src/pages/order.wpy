@@ -28,7 +28,7 @@ export default class Order extends wepy.page {
   };
   data = {
     winHeight: 0,
-    tabList: ["全部订单", "待支付", "待收货", "已完成"],
+    tabList: ["全部", "待付款", "待收货", "已完成"],
     orderList: [],
     currentTab: 0,
     showLoading: false
@@ -45,25 +45,34 @@ export default class Order extends wepy.page {
     if (currentTab === 1) {
       const json = await api.getUnpaidOrders();
       if (json.data.success) {
-        this.orderList = json.data.orders;
+        this.updateOrderList(json.data.orders);
       }
     } else if (currentTab === 2) {
       const json = await api.getPaidOrders();
       if (json.data.success) {
-        this.orderList = json.data.orders;
+        this.updateOrderList(json.data.orders);
       }
     } else if (currentTab === 3) {
       const json = await api.getCompleteOrders();
       if (json.data.success) {
-        this.orderList = json.data.orders;
+        this.updateOrderList(json.data.orders);
       }
     } else {
       const json = await api.getAllOrders();
       if (json.data.success) {
-        this.orderList = json.data.orders;
+        this.updateOrderList(json.data.orders);
       }
     }
     this.$apply();
+  }
+
+  updateOrderList(orders) {
+    const maporders = orders.map(order => {
+      order["order_passed_hours"] =
+        Math.abs(new Date() - new Date(order.created_at)) / 36e5;
+      return order;
+    });
+    this.orderList = maporders;
   }
 
   onPullDownRefresh() {

@@ -50,58 +50,12 @@ export default class ShopItemList extends wepy.component {
     imageSuffix: GOOD_IMAGE_SMALL_SQUARE_SUFFIX
   };
 
-  async applyRefund(itemId) {
-    let userSpecialInfo = wepy.getStorageSync(USER_SPECICAL_INFO) || {};
-    let openId = userSpecialInfo.openid;
-
-    const json = await api.refundApply({
-      query: {
-        openId: openId,
-        orderItemId: itemId
-      }
-    });
-    if (json.data.code == 0) {
-      wx.showModal({
-        title: "提示",
-        content: "你的退货申请已提交,等待审批!",
-        showCancel: false,
-        success: function(res) {
-          if (res.confirm) {
-          } else if (res.cancel) {
-          }
-        }
-      });
-    } else {
-      tip.error(json.data.msg);
-    }
-  }
-
   methods = {
-    refreshList(val) {
-      if (val == undefined) return;
-      console.log("val.....", val);
-      this.list = val;
-      this.$apply();
-    },
-    refund(e) {
-      let itemId = e.currentTarget.dataset.id;
-      let that = this;
-      wx.showModal({
-        title: "提示",
-        content: "确定要退货吗?",
-        success: function(res) {
-          if (res.confirm) {
-            that.applyRefund(itemId);
-          } else if (res.cancel) {
-            console.log("用户点击取消");
-          }
-        }
-      });
-    }
+
   };
 
   onLoad() {
-    this.list = [];
+
   }
 }
 </script>

@@ -1,8 +1,8 @@
 <!--订单列表模块-->
 <template>
 <view class="order_item">
-<repeat for="{{orderList}}">
-  <view class="list" wx:key="index">
+<repeat for="{{orderList}}" key="index" index="index" item="item">
+  <view class="list">
     <navigator class="item_content" url="/pages/order_detail?id={{item._id}}">
       <view class="order_list_top">
         <view class="left">
@@ -14,24 +14,23 @@
           </view>
         </view>
         <view>
-          <view class="order_state" wx:if="{{item.status==='WAIT_BUYER_PAY'}}">{{orderExpired ? '订单关闭' : '待付款'}}</view>
+          <view class="order_state" wx:if="{{item.status==='WAIT_BUYER_PAY'}}">{{item.order_passed_hours > 0.5 ? '订单关闭' : '待付款'}}</view>
           <view class="order_state" wx:if="{{item.status==='WAIT_SELLER_SEND_GOODS'}}">待发货</view>
           <view class="order_state" wx:if="{{item.status==='WAIT_BUYER_CONFIRM_GOODS'}}">待收货</view>
           <view class="order_state" wx:if="{{item.status==='TRADE_FINISHED'}}">已完成</view>
         </view>
     </view>
-
     <view class="order_list_center">
       <shopItemList :list.sync="item.packages"></shopItemList>
     </view>
-  </navigator>
-  <view class="order_list_footer">
-      <view class="btn_group">
-        <view class="btn btn_pay" @tap="payMoney" data-id="{{item._id}}" wx:if="{{item.status==='WAIT_BUYER_PAY'}}">立即付款</view>
-        <view class="btn"  wx:if="{{item.status==='WAIT_SELLER_SEND_GOODS'}}">催发货</view>
-        <view class="btn" data-id="{{item._id}}" wx:if="{{item.status==='WAIT_BUYER_CONFIRM_GOODS'}}">确认收货</view>
-      </view>
-  </view>
+    </navigator>
+    <view class="order_list_footer">
+        <view class="btn_group">
+          <view class="btn btn_pay" @tap="payMoney" data-id="{{item._id}}" wx:if="{{item.status==='WAIT_BUYER_PAY' && item.order_passed_hours <= 0.5}}">立即付款</view>
+          <view class="btn"  wx:if="{{item.status==='WAIT_SELLER_SEND_GOODS'}}">催发货</view>
+          <view class="btn" data-id="{{item._id}}" wx:if="{{item.status==='WAIT_BUYER_CONFIRM_GOODS'}}">确认收货</view>
+        </view>
+    </view>
 
   </view>
 </repeat>
@@ -56,6 +55,17 @@ export default class orderItem extends wepy.component {
   };
 
   computed = {};
+
+  async recheckOrderStatus(order_id) {
+    await api.recheckOrder({
+      query: {
+        order_id: order_id
+      }
+    });
+    wepy.redirectTo({
+      url: "/pages/order?tab=0"
+    });
+  }
 
   async wechatPay(order_id) {
     const json = await api.getPayParams({
@@ -88,13 +98,16 @@ export default class orderItem extends wepy.component {
             url: "/pages/order?tab=1"
           });
         } else {
-          tip.error("出错了");
+          console.log(paydata);
+          tip.error("出错了1");
           this.disablePayButton = false;
           this.$apply();
         }
       }
     } else {
-      tip.error("出错了");
+      console.log(paydata);
+      tip.error("出错了2");
+      this.recheckOrderStatus(order_id);
       this.disablePayButton = false;
       this.$apply();
     }
@@ -161,7 +174,7 @@ export default class orderItem extends wepy.component {
       margin: 0 auto;
       width: 100%;
       border-radius: 5rpx;
-      border:1px solid #ff4856;
+      border: 1px solid #ff4856;
       color: #ff4856;
     }
     .btn_del {
@@ -171,7 +184,6 @@ export default class orderItem extends wepy.component {
     .btn_pay {
       background: #ff4856;
       color: #fff;
-      margin-left: 20rpx;
     }
   }
 }

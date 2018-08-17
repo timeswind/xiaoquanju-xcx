@@ -24,8 +24,7 @@
 
 
 <view class="goodsList">
-    <!--列表显示2个，绑定数据记得去掉，这里做调试-->
-<repeat for="{{shopcarts}}" key="index" index="index" item="item">
+<repeat for="{{goods}}" key="index" index="index" item="item">
 <view class="list_box">
       <view class="goods-info">
         <view class="img-box">
@@ -57,7 +56,7 @@
     <view class="pay_box">
       <form report-submit bindsubmit="createOrder" >
         <text class="address_warning" wx:if="{{!address._id}}">*填写地址</text>
-        <button form-type="submit" class="button type_green" disabled="{{!address._id || disablePayButton}}" style="margin-top: 8px">微信支付</button>
+        <button form-type="submit" class="button type_green" disabled="{{!address._id || disablePayButton || goods.length === 0}}" style="margin-top: 8px">微信支付</button>
       </form>
     </view>
   </view>
@@ -71,7 +70,8 @@ import {
   USER_SPECICAL_INFO,
   ADDRESS_ID,
   IMAGE_CDN_URL,
-  GOOD_IMAGE_SMALL_SQUARE_SUFFIX
+  GOOD_IMAGE_SMALL_SQUARE_SUFFIX,
+  TEMPORARY_ORDER_DATA
 } from "@/utils/constant";
 import swipeDelete from "@/components/common/wepy-swipe-delete";
 export default class ComfireOrder extends wepy.page {
@@ -85,7 +85,7 @@ export default class ComfireOrder extends wepy.page {
   data = {
     order: {},
     address: {},
-    shopcarts: [],
+    goods: [],
     disablePayButton: false,
     operating: false,
     imageCdnUrl: IMAGE_CDN_URL,
@@ -101,7 +101,7 @@ export default class ComfireOrder extends wepy.page {
     });
     const data = json.data;
     if (data.success) {
-      this.shopcarts = data.shopcarts;
+      this.goods = data.shopcarts;
     }
     this.$apply();
   }
@@ -149,9 +149,11 @@ export default class ComfireOrder extends wepy.page {
 
   async createOrderAsync() {
     this.disablePayButton = true;
+    this.$apply();
     if (this.order._id) {
       this.wechatPay(this.order._id);
-    } else {
+    } else if (this.shopcartIds && this.shopcartIds.length > 0) {
+      console.log("api.createOrderFromShopcart");
       const json = await api.createOrderFromShopcart({
         query: {
           shopcart_ids: this.shopcartIds,
@@ -166,8 +168,26 @@ export default class ComfireOrder extends wepy.page {
       } else {
         this.disablePayButton = false;
         tip.error("出错了3");
-        this.$apply();
       }
+      this.$apply();
+    } else {
+      console.log("api.createOrderFromGoodDetail");
+      const json = await api.createOrderFromGoodDetail({
+        query: {
+          goods: this.goods,
+          address_id: this.address._id
+        },
+        method: "POST"
+      });
+      const data = json.data;
+      if (data.success) {
+        this.order = data.order;
+        this.wechatPay(data.order._id);
+      } else {
+        this.disablePayButton = false;
+        tip.error("出错了4");
+      }
+      this.$apply();
     }
   }
 
@@ -219,6 +239,11 @@ export default class ComfireOrder extends wepy.page {
       const ids = option.shopcart_ids.split(",");
       this.getShopcarts(ids);
     }
+
+    if ("from_good_detail" in option) {
+      this.goods.push(wepy.getStorageSync(TEMPORARY_ORDER_DATA));
+      this.$apply();
+    }
   }
 
   onShow() {
@@ -228,15 +253,17 @@ export default class ComfireOrder extends wepy.page {
   computed = {
     totalPrice() {
       var price = 0;
-      this.shopcarts.forEach(shopcart => {
+      this.goods.forEach(shopcart => {
         price += shopcart.item_count * shopcart.price_set.price;
       });
       return price.toFixed(2);
     },
     shopcartIds() {
       var ids = [];
-      this.shopcarts.forEach(shopcart => {
-        ids.push(shopcart._id);
+      this.goods.forEach(shopcart => {
+        if (shopcart._id) {
+          ids.push(shopcart._id);
+        }
       });
       return ids;
     }
@@ -244,12 +271,7 @@ export default class ComfireOrder extends wepy.page {
 
   methods = {
     createOrder() {
-      console.log(this);
       this.createOrderAsync();
-    },
-    bindKeyInput(e) {
-      this.sellerMessage = e.detail.value;
-      console.log("====" + e.detail.value);
     },
     setAddress() {
       wepy.navigateTo({

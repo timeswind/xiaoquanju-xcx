@@ -23,8 +23,7 @@ export default class Home extends wepy.page {
     goodList: []
   };
 
-
-  async onShow() {
+  onShow() {
     this.getGoods();
   }
 
@@ -47,15 +46,6 @@ export default class Home extends wepy.page {
   }
 
   methods = {
-    goToAdvert(url) {
-      // console.log("url===" + url);
-      // if (url.length == 0) {
-      //   return;
-      // }
-      // wepy.navigateTo({
-      //   url: url
-      // });
-    },
     onShareAppMessage: function(res) {
       if (res.from === "button") {
         // 来自页面内转发按钮
